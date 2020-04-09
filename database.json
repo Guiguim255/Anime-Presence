@@ -6,10 +6,14 @@
   },
 
   "adn": {
-    "No Game No Life": "no_game_no_life"
+    "No Game No Life": "no_game_no_life",
+    "Fire Force": "fire_force"
   },
 
   "crunchyroll": {
-    "Fire Force": "fire_force"
+    "Fire Force": "fire_force",
+    "Charlotte": "charlotte",
+    "No Game No Life": "no_game_no_life",
+    "Demon Slayer Kimetsu No Yaiba": "demon_slayer"
   }
 }

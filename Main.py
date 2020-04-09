@@ -11,7 +11,7 @@ client_id = config["App_ID"]  # You can put your own app ID
 RPC = Presence(client_id)  # Initialize the client class
 RPC.connect()  # Start the handshake loop
 
-url = "https://animedigitalnetwork.fr/video/no-game-no-life/5000-episode-1-debutant"
+url = "https://www.wakanim.tv/fr/v2/catalogue/episode/2497/made-in-abyss-saison-1-episode-04-vostfr"
 actual_epoch = round(time())
 url.capitalize()
 
