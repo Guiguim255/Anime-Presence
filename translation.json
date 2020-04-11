@@ -11,5 +11,12 @@
     "episode": "episode",
     "saison": "saison",
     "format": "watching anime_name, saison s_nb episode ep_nb"
+  },
+
+  "ndl": {
+    "watching": "Kijken naar",
+    "episode": "episode",
+    "saison": "seizoen",
+    "format": "watching anime_name, saison s_nb episode ep_nb"
   }
 }
