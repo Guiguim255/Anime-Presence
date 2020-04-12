@@ -3,6 +3,18 @@ import json
 from time import sleep, time
 from anime_infos import get_anime_info
 
+
+def generate_state(language_format, translations, variables):
+    new_str = language_format
+    for element in translations:
+        new_str = new_str.replace(element, translation[language][element])
+
+    for element in variables:
+        new_str = new_str.replace(element, infos[element])
+
+    return new_str
+
+
 json_file = open("config.json", "r")
 config = json.load(json_file)
 json_file.close()
@@ -17,7 +29,7 @@ RPC.connect()  # Start the handshake loop
 
 url = "https://www.wakanim.tv/fr/v2/catalogue/episode/2497/made-in-abyss-saison-1-episode-04-vostfr"
 language = "fr"
-language_format = (translation[language])["format"]
+l_format = (translation[language])["format"]
 
 actual_epoch = round(time())
 url.capitalize()
@@ -25,18 +37,13 @@ url.capitalize()
 while True:
     infos = get_anime_info(url)
 
-    if infos[2] != "/":
-        state = language_format.replace("watching", translation[language]["watching"])
-        state = state.replace("anime_name", infos[1])
-        state = state.replace("saison", translation[language]["saison"])
-        state = state.replace("s_nb", infos[2])
-        state = state.replace("episode", translation[language]["episode"])
-        state = state.replace("ep_nb", infos[3])
+    if infos["s_nb"] != "/":
+        state = generate_state(l_format, ["watching", "saison", "episode"], ["anime_name", "ep_nb", "s_nb"])
     else:
-        state = language_format.replace("watching", translation[language]["watching"])
-        state = state.replace("anime_name", infos[1])
-        state = state.replace("episode", translation[language]["episode"])
-        state = state.replace("ep_nb", infos[3])
+        state = generate_state(l_format, ["watching", "episode"], ["anime_name", "ep_nb"])
 
-    RPC.update(details="Regarde un anime", state=state, large_image=infos[4], small_image=infos[5], start=actual_epoch)
+    print(state)
+
+    RPC.update(details="Regarde un anime", state=state, large_image=infos["image"], small_image=infos["small_image"],
+               start=actual_epoch)
     sleep(60)

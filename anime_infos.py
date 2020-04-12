@@ -6,15 +6,15 @@ def get_image(infos):
         db = json.load(f)
 
     try:
-        image = (db[infos[0]])[infos[1]]
-        small_image = infos[0] + "_logo"
+        image = (db[infos["website"]])[infos["anime_name"]]
+        small_image = infos["website"] + "_logo"
     except KeyError:
-        image = infos[0] + "_logo"
+        image = infos["website"] + "_logo"
         small_image = "/"
 
     informations = infos
-    informations.append(image)
-    informations.append(small_image)
+    informations["image"] = image
+    informations["small_image"] = small_image
 
     return informations
 
@@ -52,7 +52,7 @@ def wakanim_info(url):
     for element in x:
         nom += element
 
-    informations = ["wakanim", nom, saison, episode]
+    informations = {"website": "wakanim", "anime_name": nom, "s_nb": saison, "ep_nb": episode}
 
     return informations
 
@@ -68,7 +68,7 @@ def adn_infos(url):
     episode = n[n.index("episode") + 1]
     saison = "/"
 
-    informations = ["adn", nom, saison, episode]
+    informations = {"website": "adn", "anime_name": nom, "s_nb": saison, "ep_nb": episode}
 
     return informations
 
@@ -84,7 +84,8 @@ def crunchyroll_info(url):
     episode = n[n.index("episode") + 1]
     saison = "/"
 
-    informations = ["crunchyroll", nom, saison, episode]
+    informations = {"website": "crunchyroll", "anime_name": nom, "s_nb": saison, "ep_nb": episode}
+
     return informations
 
 
