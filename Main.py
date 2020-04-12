@@ -38,12 +38,10 @@ while True:
     infos = get_anime_info(url)
 
     if infos["s_nb"] != "/":
-        state = generate_state(l_format, ["watching", "saison", "episode"], ["anime_name", "ep_nb", "s_nb"])
+        state = generate_state(l_format, ["saison", "episode"], ["anime_name", "ep_nb", "s_nb"])
     else:
-        state = generate_state(l_format, ["watching", "episode"], ["anime_name", "ep_nb"])
+        state = generate_state(l_format, ["episode"], ["anime_name", "ep_nb"])
 
-    print(state)
-
-    RPC.update(details="Regarde un anime", state=state, large_image=infos["image"], small_image=infos["small_image"],
+    RPC.update(details=translation[language]["watching an anime"], state=state, large_image=infos["image"], small_image=infos["small_image"],
                start=actual_epoch)
     sleep(60)
