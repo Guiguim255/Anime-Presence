@@ -24,8 +24,6 @@ class Userinterface(Tk):
         self.language = self.config_json["user_language"]
         self.l_format = self.translation[self.language]["format"]
 
-        self.actual_epoch = round(time())
-
         self.title("Anime Presence")
         self.iconbitmap("data/images/icon.ico")
         self.geometry("400x300")
@@ -77,6 +75,7 @@ class Userinterface(Tk):
         return new_str
 
     def update_presence(self, url):
+        self.actual_epoch = round(time())
         self.infos = get_anime_info(url)
 
         if self.infos["s_nb"] != "/":
