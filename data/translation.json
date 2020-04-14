@@ -9,9 +9,10 @@
     "updated presence": "Présence mise à jour",
     "settings": "Paramètres",
     "change language": "Changer de langue",
-    "enter abbreviation": "Veuillez entrer l'abréviation de votre langue (exemples: en, fr, jap...):",
     "save": "Enregistrer",
-    "language changed": "La langue a été correctement modifiée, veuillez relancer le programme"
+    "language changed": "La langue a été correctement modifiée, veuillez relancer le programme",
+	"settings": "Paramètres",
+	"language": "Langue"
   },
 
   "en": {
@@ -24,9 +25,10 @@
     "updated presence": "Updated presence",
     "settings": "Settings",
     "change language": "Change language",
-    "enter abbreviation": "Please enter the abbreviation for your language (examples: en, fr, jap...):",
     "save": "Save",
-    "language changed": "The language has been changed correctly, please restart the program"
+    "language changed": "The language has been changed correctly, please restart the program",
+	"settings":"Settings",
+	"language": "Language"
   },
 
   "ndl": {
@@ -39,8 +41,9 @@
     "updated presence": "Aanwezigheid bijgewerkt",
     "settings": "Instellingen",
     "change language": "Verander de taal",
-    "enter abbreviation": "Voer de afkorting voor uw taal in (voorbeelden: en, fr, jap...):",
     "save": "Opnemen",
-    "language changed": "De taal is correct gewijzigd, start het programma opnieuw"
+    "language changed": "De taal is correct gewijzigd, start het programma opnieuw",
+	"settings": "Instellingen",
+	"language":"Taal"
   }
 }
