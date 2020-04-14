@@ -1,4 +1,4 @@
-from tkinter import Tk, Label, Button, Entry, PhotoImage, Canvas, END, Menu
+from tkinter import Tk, Label, Button, Entry, PhotoImage, Canvas, END, Menu, StringVar
 from pypresence import Presence
 import json
 from time import time
@@ -24,17 +24,25 @@ class Userinterface(Tk):
         self.language = self.config_json["user_language"]
         self.l_format = self.translation[self.language]["format"]
 
+        self.actual_epoch = round(time())
+
         self.title("Anime Presence")
         self.iconbitmap("data/images/icon.ico")
         self.geometry("400x300")
 
-        menubar = Menu(self)
-        filemenu = Menu(menubar, tearoff=0)
-        filemenu.add_command(label=self.translation[self.language]["change language"], command=self.language_window)
+        menuBar = Menu(self)
 
-        menubar.add_cascade(label=self.translation[self.language]["settings"], menu=filemenu)
-        self.config(menu=menubar)
-
+        lang = StringVar()
+        lang.set(self.language)
+        menuSet = Menu(menuBar, tearoff=0)
+        menuLangue=Menu(menuSet, tearoff=0)
+        a=menuLangue.add_radiobutton(label="English", value="en", variable=lang, command=lambda :self.change_language(lang.get()))
+        b=menuLangue.add_radiobutton(label="Français", value="fr", variable=lang, command=lambda :self.change_language(lang.get()))
+        c=menuLangue.add_radiobutton(label="Nederlands", value="ndl",variable=lang, command=lambda :self.change_language(lang.get()))
+        menuSet.add_cascade(label=self.translation[self.language]["language"], menu=menuLangue)
+        menuBar.add_cascade(label=self.translation[self.language]["settings"], menu=menuSet)
+        self.config(menu = menuBar)        
+       
         self.image = PhotoImage(file="data/images/icon.png").subsample(6)
         self.canvas = Canvas(self, width=100, height="100")
         self.canvas.create_image(50, 50, image=self.image)
@@ -46,6 +54,7 @@ class Userinterface(Tk):
         self.url_entry.pack()
         self.confirm_button = Button(self, text=self.translation[self.language]["confirm"], command=self.confirm)
         self.confirm_button.pack()
+        self.language_label = Label(self)
 
         self.result_label = Label(self, text="", fg="#26bc1a")
         self.result_label.pack()
@@ -75,9 +84,8 @@ class Userinterface(Tk):
         return new_str
 
     def update_presence(self, url):
-        self.actual_epoch = round(time())
         self.infos = get_anime_info(url)
-
+        self.actual_epoch = round(time())
         if self.infos["s_nb"] != "/":
             state = self.generate_state(self.l_format, ["saison", "episode"], ["anime_name", "ep_nb", "s_nb"])
         else:
@@ -88,39 +96,17 @@ class Userinterface(Tk):
                         small_image=self.infos["small_image"],
                         start=self.actual_epoch)
 
-    def language_window(self):
-        self.canvas.destroy()
-        self.title_label.destroy()
-        self.url_entry.destroy()
-        self.confirm_button.destroy()
-        self.result_label.destroy()
-
-        self.language_label = Label(self,
-                                    text=self.translation[self.language]["enter abbreviation"])
-        self.language_label.pack()
-
-        self.language_entry = Entry(self)
-        self.language_entry.pack()
-
-        self.language_button = Button(self, text=self.translation[self.language]["save"], command=self.change_language)
-        self.language_button.pack()
-
-        self.language_result_label = Label(self, text="")
-        self.language_result_label.pack()
-
-    def change_language(self):
-        new_language = self.language_entry.get()
-
-        if self.language_exist(new_language):
-            self.config_json["user_language"] = new_language
-
+    def change_language(self, val):
+        if val != self.language:
+            self.config_json["user_language"] = val
             with open('data/config.json', 'w') as f:
                 json.dump(self.config_json, f, indent=2)
 
-            self.language_result_label.config(
-                text=self.translation[new_language]["language changed"], fg="#26bc1a")
+            self.language_label.config(
+                text=self.translation[val]["language changed"], fg="#26bc1a")
+            self.language_label.pack()
         else:
-            self.language_result_label.config(text="This language is not available", fg="#ff0000")
+            self.language_label.pack_forget()
 
     def language_exist(self, language_to_check):
         try:
