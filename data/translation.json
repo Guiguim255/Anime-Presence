@@ -1,0 +1,46 @@
+{
+  "fr": {
+    "watching an anime": "Regarde un anime",
+    "episode": "épisode",
+    "saison": "saison",
+    "format": "anime_name, saison s_nb episode ep_nb",
+    "please enter url": "Veuillez entrer l'url de l'épisode que vous êtes en train de regarder:",
+    "confirm": "Confirmer",
+    "updated presence": "Présence mise à jour",
+    "settings": "Paramètres",
+    "change language": "Changer de langue",
+    "enter abbreviation": "Veuillez entrer l'abréviation de votre langue (exemples: en, fr, jap...):",
+    "save": "Enregistrer",
+    "language changed": "La langue a été correctement modifiée, veuillez relancer le programme"
+  },
+
+  "en": {
+    "watching an anime": "Watching an anime",
+    "episode": "episode",
+    "saison": "saison",
+    "format": "anime_name, saison s_nb episode ep_nb",
+    "please enter url": "Please enter the url of the episode you are watching:",
+    "confirm": "Confirm",
+    "updated presence": "Updated presence",
+    "settings": "Settings",
+    "change language": "Change language",
+    "enter abbreviation": "Please enter the abbreviation for your language (examples: en, fr, jap...):",
+    "save": "Save",
+    "language changed": "The language has been changed correctly, please restart the program"
+  },
+
+  "ndl": {
+    "watching an anime": "Kijken naar een anime",
+    "episode": "episode",
+    "saison": "seizoen",
+    "format": "anime_name, saison s_nb episode ep_nb",
+    "please enter url": "Voer de url in van de aflevering die je bekijkt:",
+    "confirm": "Bevestig",
+    "updated presence": "Aanwezigheid bijgewerkt",
+    "settings": "Instellingen",
+    "change language": "Verander de taal",
+    "enter abbreviation": "Voer de afkorting voor uw taal in (voorbeelden: en, fr, jap...):",
+    "save": "Opnemen",
+    "language changed": "De taal is correct gewijzigd, start het programma opnieuw"
+  }
+}
