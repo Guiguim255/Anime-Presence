@@ -24,25 +24,25 @@ class Userinterface(Tk):
         self.language = self.config_json["user_language"]
         self.l_format = self.translation[self.language]["format"]
 
-        self.actual_epoch = round(time())
-
         self.title("Anime Presence")
         self.iconbitmap("data/images/icon.ico")
         self.geometry("400x300")
 
-        menuBar = Menu(self)
+        self.menuBar = Menu(self)
 
         lang = StringVar()
         lang.set(self.language)
-        menuSet = Menu(menuBar, tearoff=0)
-        menuLangue=Menu(menuSet, tearoff=0)
-        a=menuLangue.add_radiobutton(label="English", value="en", variable=lang, command=lambda :self.change_language(lang.get()))
-        b=menuLangue.add_radiobutton(label="Français", value="fr", variable=lang, command=lambda :self.change_language(lang.get()))
-        c=menuLangue.add_radiobutton(label="Nederlands", value="ndl",variable=lang, command=lambda :self.change_language(lang.get()))
-        menuSet.add_cascade(label=self.translation[self.language]["language"], menu=menuLangue)
-        menuBar.add_cascade(label=self.translation[self.language]["settings"], menu=menuSet)
-        self.config(menu = menuBar)        
-       
+        self.menuSet = Menu(self.menuBar, tearoff=0)
+        self.menuLangue = Menu(self.menuSet, tearoff=0)
+
+        for language in sorted(self.translation.keys()):
+            self.menuLangue.add_radiobutton(label=self.translation[language]["name"], value=language, variable=lang,
+                                            command=lambda: self.change_language(lang.get()))
+
+        self.menuSet.add_cascade(label=self.translation[self.language]["language"], menu=self.menuLangue)
+        self.menuBar.add_cascade(label=self.translation[self.language]["settings"], menu=self.menuSet)
+        self.config(menu=self.menuBar)
+
         self.image = PhotoImage(file="data/images/icon.png").subsample(6)
         self.canvas = Canvas(self, width=100, height="100")
         self.canvas.create_image(50, 50, image=self.image)
@@ -106,14 +106,11 @@ class Userinterface(Tk):
                 text=self.translation[val]["language changed"], fg="#26bc1a")
             self.language_label.pack()
         else:
-            self.language_label.pack_forget()
+            self.config_json["user_language"] = self.language
+            with open('data/config.json', 'w') as f:
+                json.dump(self.config_json, f, indent=2)
 
-    def language_exist(self, language_to_check):
-        try:
-            test = self.translation[language_to_check]["episode"]
-            return True
-        except KeyError:
-            return False
+            self.language_label.pack_forget()
 
 
 window = Userinterface()
