@@ -2,7 +2,8 @@
   "wakanim": {
     "Demon Slayer Kimetsu No Yaiba": "demon_slayer",
     "Fire Force": "fire_force",
-    "Charlotte": "charlotte"
+    "Charlotte": "charlotte",
+    "Kaguya Sama Love Is War": "love_is_war"
   },
 
   "adn": {
@@ -14,6 +15,7 @@
     "Fire Force": "fire_force",
     "Charlotte": "charlotte",
     "No Game No Life": "no_game_no_life",
-    "Demon Slayer Kimetsu No Yaiba": "demon_slayer"
+    "Demon Slayer Kimetsu No Yaiba": "demon_slayer",
+    "Kaguya Sama Love Is War": "love_is_war"
   }
 }

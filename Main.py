@@ -1,4 +1,4 @@
-from tkinter import Tk, Label, Button, Entry, PhotoImage, Canvas, END, Menu, StringVar
+from tkinter import Tk, Label, Button, Entry, PhotoImage, Canvas, END, Menu, StringVar, font
 from pypresence import Presence
 import json
 from time import time
@@ -26,7 +26,8 @@ class Userinterface(Tk):
 
         self.title("Anime Presence")
         self.iconbitmap("data/images/icon.ico")
-        self.geometry("400x300")
+        self.geometry("400x225")
+        self.wm_minsize(400, 225)
 
         self.menuBar = Menu(self)
 
@@ -54,7 +55,6 @@ class Userinterface(Tk):
         self.url_entry.pack()
         self.confirm_button = Button(self, text=self.translation[self.language]["confirm"], command=self.confirm)
         self.confirm_button.pack()
-        self.language_label = Label(self)
 
         self.result_label = Label(self, text="", fg="#26bc1a")
         self.result_label.pack()
@@ -102,15 +102,13 @@ class Userinterface(Tk):
             with open('data/config.json', 'w') as f:
                 json.dump(self.config_json, f, indent=2)
 
-            self.language_label.config(
-                text=self.translation[val]["language changed"], fg="#26bc1a")
-            self.language_label.pack()
+            self.result_label.configure(text=self.translation[val]["language changed"], fg="#26bc1a")
         else:
             self.config_json["user_language"] = self.language
             with open('data/config.json', 'w') as f:
                 json.dump(self.config_json, f, indent=2)
 
-            self.language_label.pack_forget()
+            self.result_label.configure(text="")
 
 
 window = Userinterface()
