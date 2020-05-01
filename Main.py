@@ -44,7 +44,7 @@ class Userinterface(Tk):
         self.menuBar.add_cascade(label=self.translation[self.language]["settings"], menu=self.menuSet)
         self.config(menu=self.menuBar)
 
-        self.image = PhotoImage(file="data/images/icon.png").subsample(6)
+        self.image = PhotoImage(file="data/images/icon.png")
         self.canvas = Canvas(self, width=100, height="100")
         self.canvas.create_image(50, 50, image=self.image)
         self.canvas.pack()
