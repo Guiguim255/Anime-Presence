@@ -26,7 +26,7 @@ Repeat this process when you change of episode/anime.
 When you want to stop showing you are watching an anime, just close the window.
 
 ### How to change the language
-If you want to change the language of your application **and** the language of presence, click on "Settings", then "Language", then choose your language (if your language is not showing, it is not available. If you want to help to translate, go check the [Contribution Section](https://github.com/Guiguim255/Anime-Presence/tree/user-interface-beta#Contribute)
+If you want to change the language of your application **and** the language of presence, click on "Settings", then "Language", then choose your language (if your language is not showing, it is not available. If you want to help to translate, go check the [Contribution Section](https://github.com/Guiguim255/Anime-Presence/tree/user-interface-beta#Contribute))
 
 ![screen1](https://raw.githubusercontent.com/Guiguim255/database/master/anime_presence_language_screenshot.png) 
 
