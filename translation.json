@@ -1,0 +1,22 @@
+{
+  "fr": {
+    "watching an anime": "Regarde un anime",
+    "episode": "épisode",
+    "saison": "saison",
+    "format": "anime_name, saison s_nb episode ep_nb"
+  },
+
+  "en": {
+    "watching an anime": "Watching an anime",
+    "episode": "episode",
+    "saison": "saison",
+    "format": "anime_name, saison s_nb episode ep_nb"
+  },
+
+  "ndl": {
+    "watching an anime": "Kijken naar een anime",
+    "episode": "episode",
+    "saison": "seizoen",
+    "format": "anime_name, saison s_nb episode ep_nb"
+  }
+}
