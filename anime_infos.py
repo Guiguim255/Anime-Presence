@@ -2,7 +2,7 @@ import json
 
 
 def get_image(infos):
-    with open("database.json", "r") as f:
+    with open("data/database.json", "r") as f:
         db = json.load(f)
 
     try:
