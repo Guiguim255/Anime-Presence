@@ -33,4 +33,5 @@ If you want to change the language of your application **and** the language of p
 ## Contribute
 *void*
 
-<div>(TemporaIcon made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+## Credits
+* Temporary "A" logo made by [DinosoftLabs](https://www.flaticon.com/authors/dinosoftlabs) from [Flaticon](https://www.flaticon.com/)
