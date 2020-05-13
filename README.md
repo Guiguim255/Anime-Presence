@@ -13,7 +13,6 @@ This application shows that you are watching an anime on your own Discord profil
 This timer requires to have the lasted version of [Python 3.7](https://www.python.org/downloads/) and the [pypresence](https://pypi.org/project/pypresence/), [Beatiful Soup](https://pypi.org/project/beautifulsoup4/), [aiohttp](https://pypi.org/project/aiohttp/) and [PyQt5](https://pypi.org/project/PyQt5/) python packages.
 
 If you don't have it, use the package manager [pip](https://pip.pypa.io/en/stable/) to install pypresence and/or PyQt5 the dependencies by doing : 
-pip install pypresence
 ```
 pip install -r requirements.txt
 ```
