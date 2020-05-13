@@ -20,6 +20,9 @@ class Ui_MainWindow(object):
         font.setFamily("Rubik")
         font.setPointSize(9)
         MainWindow.setFont(font)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("data/ressources/letters.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        MainWindow.setWindowIcon(icon)
         MainWindow.setLayoutDirection(QtCore.Qt.LeftToRight)
         MainWindow.setObjectName("MainWindow")
         MainWindow.setStyleSheet("QWidget#MainWindow{background-color: rgb(70, 73, 77);}\n"
@@ -37,7 +40,7 @@ class Ui_MainWindow(object):
         self.logo_image.setMinimumSize(QtCore.QSize(80, 80))
         self.logo_image.setMaximumSize(QtCore.QSize(80, 80))
         self.logo_image.setText("")
-        self.logo_image.setPixmap(QtGui.QPixmap("ressource_test/shiro.png"))
+        self.logo_image.setPixmap(QtGui.QPixmap("data/ressources/letters.png"))
         self.logo_image.setScaledContents(True)
         self.logo_image.setObjectName("logo_image")
         self.horizontalLayout_3.addWidget(self.logo_image)
@@ -150,9 +153,9 @@ class Ui_MainWindow(object):
                                            "    background: #616366;\n"
                                            "    border: 2px solid #616366;\n"
                                            "}")
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("ressource_test/interfacewhite.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.settings_button.setIcon(icon)
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap("data/ressources/gearwhite.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.settings_button.setIcon(icon1)
         self.settings_button.setIconSize(QtCore.QSize(16, 16))
         self.settings_button.setObjectName("settings_button")
         self.horizontalLayout_4.addWidget(self.settings_button)

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>769</width>
-    <height>350</height>
+    <width>629</width>
+    <height>304</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -31,13 +31,24 @@
   <property name="windowTitle">
    <string>Anime Presence</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../ressources/letters.png</normaloff>../ressources/letters.png</iconset>
+  </property>
   <property name="layoutDirection">
    <enum>Qt::LeftToRight</enum>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(70, 73, 77);
-color: rgb(255, 255, 255);
-</string>
+   <string notr="true">QMainWindow{
+	background-color: rgb(70, 73, 77);
+	color: rgb(255, 255, 255);
+}
+
+QComboBox QAbstractItemView {
+    background-color: rgb(97, 99, 102);
+    color: white;
+	selection-background-color: rgb(97, 99, 102);
+}</string>
   </property>
   <property name="toolButtonStyle">
    <enum>Qt::ToolButtonIconOnly</enum>
@@ -67,7 +78,7 @@ color: rgb(255, 255, 255);
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap>ressource_test/shiro.png</pixmap>
+         <pixmap>../ressources/letters.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
@@ -102,7 +113,9 @@ color: rgb(255, 255, 255);
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">QLabel{
+	color: #ffffff;
+}</string>
         </property>
         <property name="text">
          <string>Enter the url of the anime you are watching</string>
@@ -169,7 +182,8 @@ color: rgb(255, 255, 255);
          <string notr="true">QLineEdit{
 	background: #616366;
 	border: 2px solid #616366;
-	border-radius: 10px
+	border-radius: 10px;
+	color: #ffffff;
 }</string>
         </property>
        </widget>
@@ -255,6 +269,7 @@ color: rgb(255, 255, 255);
 	border: 2px solid #616366;
 	border-radius: 15px;
 	padding: 2 10px;
+	color: #ffffff;
 }</string>
         </property>
         <property name="text">
@@ -343,7 +358,7 @@ color: rgb(255, 255, 255);
 	border-radius: 13px;
 	padding: 2 7px;
 	padding-right: 10px;
-	transition: 0.25s;
+	color: #ffffff;
 }
 
 QPushButton:hover{
@@ -356,7 +371,7 @@ QPushButton:hover{
         </property>
         <property name="icon">
          <iconset>
-          <normaloff>ressource_test/interfacewhite.png</normaloff>ressource_test/interfacewhite.png</iconset>
+          <normaloff>../ressources/gearwhite.png</normaloff>../ressources/gearwhite.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -375,7 +390,7 @@ QPushButton:hover{
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>769</width>
+     <width>629</width>
      <height>21</height>
     </rect>
    </property>

@@ -1,14 +1,12 @@
-from PyQt5.QtWidgets import QMainWindow, QCompleter, QComboBox
-from PyQt5.QtCore import pyqtSlot, QUrl, Qt, QStringListModel
-from AnimeLabel import AnimeScrollView, Fetcher
-from Ui_AnimePresence_MainWindow import Ui_MainWindow
+from PyQt5.QtWidgets import QMainWindow, QComboBox
+from PyQt5.QtCore import pyqtSlot, Qt
+from data.ui.AnimeLabel import AnimeScrollView, Fetcher
+from data.ui.Ui_AnimePresence_MainWindow import Ui_MainWindow
 from pypresence import Presence
 import json
 from time import time
 from anime_infos import getAnimeInfos
 from urllib.parse import urlparse
-from bs4 import BeautifulSoup
-import requests
 
 
 class UserInterface(QMainWindow, Ui_MainWindow):
@@ -35,7 +33,6 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         self.infos = {}
 
         self.confirm_button.clicked.connect(self.on_confirm_button_clicked)
-
 
         self.scrollView = AnimeScrollView()
         self.setFocusPolicy(Qt.StrongFocus)
@@ -66,7 +63,7 @@ class UserInterface(QMainWindow, Ui_MainWindow):
                 self.result_label.setStyleSheet("QLabel{color: #bc1a26;}")
                 self.result_label.setText("Invalid url")"""
 
-            #self.url_entry.clear()
+            # self.url_entry.clear()
 
     def onLabelClick(self, text):
         self.url_entry.setText(text)
@@ -89,7 +86,7 @@ class UserInterface(QMainWindow, Ui_MainWindow):
 
     def onEdit(self, query):
         self.choice.hide()
-        if not(query.startswith("http") or query.startswith("www")):
+        if not (query.startswith("http") or query.startswith("www")):
             if not self.isRunning:
                 self.isRunning = True
                 self.fetcher = Fetcher(query)
@@ -120,14 +117,12 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         nStr = nStr.replace("s_nb", infos["s_nb"]).replace("ep_nb", infos["ep_nb"])
         return nStr
 
-
-
     def update_presence(self, text, type):
         if type == "url":
             infos = getAnimeInfos(text)
         else:
-            website = ["", "adn", "crunchyroll","wakanim",""][self.choice.currentIndex()]
-            infos = {"ep_nb":"0","s_nb":"0","anime_name":text, "website":"","image":"", "small_image":""}
+            website = ["", "adn", "crunchyroll", "wakanim", ""][self.choice.currentIndex()]
+            infos = {"ep_nb": "0", "s_nb": "0", "anime_name": text, "website": "", "image": "", "small_image": ""}
             if website:
                 infos["image"] = website + "_logo"
         state = self.generate_state(self.l_format, infos)
@@ -145,11 +140,11 @@ class UserInterface(QMainWindow, Ui_MainWindow):
             self.RPC.update(details=self.translation[self.language]["watching an anime"], state=state,
                             start=self.actual_epoch)
 
-
     @pyqtSlot()
     def closeEvent(self, event):
         self.RPC.close()
         event.accept()
+
 
 class WebsiteComboBox(QComboBox):
     def __init__(self):
@@ -160,4 +155,9 @@ class WebsiteComboBox(QComboBox):
         self.insertItem(3, "Wakanim")
         self.insertItem(4, "Autre")
         self.model().item(0).setEnabled(False)
-
+        self.setStyleSheet("QComboBox {background: #616366;border: 1px solid #616366;border-radius: "
+                           "3px;}QComboBox::drop-down{width: 30px;border-left-width: 1px;border-left-color: "
+                           "darkgray;border-left-style: solid;}QComboBox::down-arrow{image: url("
+                           "data/ressources/expandwhite.png);width: 16px;height: 16px;}"
+                           "QComboBox QAbstractItemView {border: 2px solid #616366; color: white; background-color: "
+                           "#616366;selection-background-color: #757779; selection-border: 2px solid white;}")
