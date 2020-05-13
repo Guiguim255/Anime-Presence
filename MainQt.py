@@ -53,7 +53,7 @@ class UserInterface(QMainWindow, Ui_MainWindow):
     def on_confirm_button_clicked(self):
         texte = self.url_entry.text()
         if texte:
-            if urlparse(texte)[0]:
+            if texte.startswith("http") or texte.startswith("www"):
                 self.update_presence(texte, "url")
                 self.result_label.setStyleSheet("QLabel{color: #26bc1a;}")
             else:
