@@ -31,9 +31,9 @@ class AnimeScrollView(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidget(self.widget)
         self.setWidgetResizable(True)
-        self.setMinimumHeight(138)
-        self.setGeometry(0, 0, 400, 138)
-        self.verticalScrollBar().setSingleStep(20)
+        self.setMinimumHeight(142)
+        self.setGeometry(0, 0, 400, 142)
+        self.verticalScrollBar().setSingleStep(48)
         self.hide()
 
     def fill(self, titles):
@@ -75,13 +75,16 @@ class AnimeLabel(QWidget):
         self.setAutoFillBackground(True)
 
         self.title = title
+        if len(title) > 48:
+            title = title[:46] + "..."
+            print(title)
+            self.setToolTip(self.title)
         self.layout = QHBoxLayout()
 
         self.image = QPixmap()
         self.image.loadFromData(byteArray)
         self.image = self.image.scaledToHeight(50, Qt.SmoothTransformation)
         self.imLabel = QLabel()
-        self.imLabel.setText(self.title)
         self.imLabel.setPixmap(self.image)
         self.imLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
 
