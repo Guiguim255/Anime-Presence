@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QComboBox
+from PyQt5.QtWidgets import QMainWindow, QComboBox, QApplication
 from PyQt5.QtCore import pyqtSlot, Qt
 from data.ui.AnimeLabel import AnimeScrollView, Fetcher
 from data.ui.Ui_AnimePresence_MainWindow import Ui_MainWindow
@@ -7,6 +7,7 @@ import json
 from time import time
 from anime_infos import getAnimeInfos
 from urllib.parse import urlparse
+import sys
 
 
 class UserInterface(QMainWindow, Ui_MainWindow):
@@ -81,7 +82,7 @@ class UserInterface(QMainWindow, Ui_MainWindow):
             if not self.scrollView.hasFocus():
                 self.scrollView.hide()
                 self.confirm_button.show()
-            if not (self.url_entry.text().startswith("http") or self.url_entry.text().startswith("www")):
+            if not (self.url_entry.text().startswith("http") or self.url_entry.text().startswith("www")) and not self.scrollView.isVisible():
                 self.choice.show()
 
     def onEdit(self, query):
@@ -160,4 +161,8 @@ class WebsiteComboBox(QComboBox):
                            "darkgray;border-left-style: solid;}QComboBox::down-arrow{image: url("
                            "data/ressources/expandwhite.png);width: 16px;height: 16px;}"
                            "QComboBox QAbstractItemView {border: 2px solid #616366; color: white; background-color: "
-                           "#616366;selection-background-color: #757779; selection-border: 2px solid white;}")
+                           "#616366;selection-background-color: #757779; selection-border: 2px solid white;outline: 0px;}")
+app = QApplication(sys.argv)
+win = UserInterface()
+win.show()
+sys.exit(app.exec_())
