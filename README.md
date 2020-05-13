@@ -12,22 +12,14 @@ This application shows that you are watching an anime on your own Discord profil
 ### Requirements
 This timer requires to have the lasted version of [Python 3.7](https://www.python.org/downloads/) and the [pypresence](https://pypi.org/project/pypresence/), [Beatiful Soup](https://pypi.org/project/beautifulsoup4/), [aiohttp](https://pypi.org/project/aiohttp/) and [PyQt5](https://pypi.org/project/PyQt5/) python packages.
 
-If you don't have it, use the package manager [pip](https://pip.pypa.io/en/stable/) to install pypresence and/or PyQt5.
-```bash
+If you don't have it, use the package manager [pip](https://pip.pypa.io/en/stable/) to install pypresence and/or PyQt5 the dependencies by doing : 
 pip install pypresence
 ```
-```bash
-pip install beautifulsoup4
-```
-```bash
-pip install aiohttp
-```
-```bash
-pip install PyQt5
+pip install -r requirements.txt
 ```
 
 ### How to use
-You need to execute the "star_app.py" file. Then, a window will appear asking you to enter the url of the episode you are watching.
+You need to execute the "mainQt.py" file. Then, a window will appear asking you to enter the url of the episode you are watching.
 
 To get this url, just start watching your episode on your favourite web browser, and copy the url in your navigation bar. Paste it in the entry of the Anime Presence window, click on the confirm button and you're done ! Your Discord profile is now showing the anime you are watching.
 Repeat this process when you change of episode/anime.
