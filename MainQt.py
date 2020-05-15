@@ -6,7 +6,7 @@ from pypresence import Presence
 import json
 from time import time
 from anime_infos import getAnimeInfos
-from urllib.parse import urlparse
+from SettingsQt import Settings_UserInterface
 import sys
 
 
@@ -15,6 +15,10 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         super(UserInterface, self).__init__()
 
         self.setupUi(self)
+
+        self.settingsWindow = Settings_UserInterface()
+        self.settings_button.clicked.connect(self.openSettings)
+        self.settingsWindow.onClose.connect(self.onSettingsClosed)
 
         json_file = open("data/config.json", "r")
         self.config_json = json.load(json_file)
@@ -117,6 +121,17 @@ class UserInterface(QMainWindow, Ui_MainWindow):
             return nStr
         nStr = nStr.replace("s_nb", infos["s_nb"]).replace("ep_nb", infos["ep_nb"])
         return nStr
+
+    def openSettings(self):
+        self.hide()
+        self.settingsWindow.show()
+        self.settingsWindow.closeBySave = False
+
+    def onSettingsClosed(self, var):
+        if var:
+            self.show()
+        else:
+            self.close()
 
     def update_presence(self, text, type):
         if type == "url":
