@@ -1,17 +1,16 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QApplication, QScrollArea, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QScrollArea, QVBoxLayout
 from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtGui import QPixmap, QPalette, QColor
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
 from itertools import zip_longest
 import asyncio
 import aiohttp
-import requests
-import sys
 from bs4 import BeautifulSoup
 
 
 class AnimeScrollView(QScrollArea):
     clicked = pyqtSignal(str)
+
     def __init__(self):
         super(AnimeScrollView, self).__init__()
 
@@ -26,7 +25,7 @@ class AnimeScrollView(QScrollArea):
         self.animeLabels = []
         self.layout = QVBoxLayout(self.widget)
         self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidget(self.widget)
@@ -63,8 +62,8 @@ class AnimeScrollView(QScrollArea):
     def onClick(self, texte):
         self.clicked.emit(texte)
 
-class AnimeLabel(QWidget):
 
+class AnimeLabel(QWidget):
     labelClicked = pyqtSignal(str)
 
     def __init__(self, title, byteArray):
@@ -111,6 +110,7 @@ class AnimeLabel(QWidget):
         palette.setColor(QPalette.Background, QColor("#797f86"))
         self.setPalette(palette)
 
+
 class Fetcher(QThread):
     finished = pyqtSignal(list)
 
@@ -128,34 +128,22 @@ class Fetcher(QThread):
         async def main():
             async with aiohttp.ClientSession() as session:
                 page = await get(session, f"https://www.anime-gate.net/ajax/animes/suggest?search={self.query}", "text")
-
                 soup = BeautifulSoup(page, "html.parser")
-
                 imgs = soup.find_all("img", {"class": "pull-left"})
                 imgLinks, titles = [*map(lambda x: x["src"], imgs)], [*map(lambda x: x["title"], imgs)]
-                imageArray = []
+                tasks = []
                 for imgLink in imgLinks:
-                    imageArray.append(await get(session, imgLink, "image"))
-            self.finished.emit([*zip(titles, imageArray)])
+                    task = asyncio.ensure_future(get(session, imgLink, "img"))
+                    tasks.append(task)
+                imgArray = await asyncio.gather(*tasks)
+                self.finished.emit([*zip(titles, imgArray)])
+
         if self.query:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            loop.run_until_complete(main())
+            future = asyncio.ensure_future(main())
+            loop.run_until_complete(future)
         else:
             self.finished.emit([])
 
-
-if __name__ == "__main__":
-    query = "happy"
-    page = requests.get(f"https://www.anime-gate.net/ajax/animes/suggest?search={query}").text
-    soup = BeautifulSoup(page, "html.parser")
-    titles, imgLinks = [*map(lambda x : x["data-title"], soup.find_all("div",{"class" : "clearfix suggest"}) + soup.find_all("div", {"class": "clearfix suggest space-up"}))], [*map(lambda x : x["src"], soup.find_all("img", {"class": "pull-left"}))]
-    img = [requests.get(link).content for link in imgLinks]
-    titles = [*zip(titles, img)]
-    img = requests.get("https://www.anime-gate.net/images-animes/no-game-no-life.jpg").content
-    app = QApplication(sys.argv)
-    win = AnimeScrollView()
-    win.fill(titles)
-    win.show()
-    sys.exit(app.exec_())
 
