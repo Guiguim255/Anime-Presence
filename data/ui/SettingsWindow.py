@@ -24,9 +24,10 @@ class Ui_SettingsWindow(object):
         icon.addPixmap(QtGui.QPixmap("data/ressources/letters.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         MainWindow.setLayoutDirection(QtCore.Qt.LeftToRight)
-        MainWindow.setStyleSheet("background-color: rgb(70, 73, 77);\n"
-                                 "color: rgb(255, 255, 255);\n"
-                                 "")
+        MainWindow.setStyleSheet("QMainWindow{background-color: rgb(70, 73, 77);\n"
+                                 "color: rgb(255, 255, 255);}"
+                                 "QAbstractItemView {border: 2px solid #616366; color: white; background-color: "
+                                 "#616366;selection-background-color: #757779; selection-border: 2px solid white;outline: 0px;}")
         MainWindow.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
         MainWindow.setTabShape(QtWidgets.QTabWidget.Rounded)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -38,6 +39,7 @@ class Ui_SettingsWindow(object):
         font.setFamily("Rubik")
         font.setPointSize(12)
         self.groupBox.setFont(font)
+        self.groupBox.setStyleSheet("color:white;")
         self.groupBox.setFlat(True)
         self.groupBox.setObjectName("groupBox")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.groupBox)
@@ -47,33 +49,10 @@ class Ui_SettingsWindow(object):
         font.setFamily("Rubik")
         font.setPointSize(14)
         self.comboBox.setFont(font)
-        self.comboBox.setStyleSheet("QComboBox{\n"
-                                    "    background: #616366;\n"
-                                    "    border: 1px solid #616366;\n"
-                                    "    border-radius: 3px;\n"
-                                    "}\n"
-                                    "\n"
-                                    "QComboBox::drop-down{\n"
-                                    "    width: 30px;\n"
-                                    "    border-left-width: 1px;\n"
-                                    "    border-left-color: darkgray;\n"
-                                    "    border-left-style: solid;\n"
-                                    "}\n"
-                                    "\n"
-                                    "QComboBox::down-arrow{\n"
-                                    "    image: url(data/ressources/expandwhite.png);\n"
-                                    "    width: 16px;\n"
-                                    "    height: 16px;\n"
-                                    "}\n"
-                                    "\n"
-                                    "QComboBox QAbstractItemView {\n"
-                                    "    border: 2px solid #616366;\n"
-                                    "    color: white;\n"
-                                    "    background-color: #616366;\n"
-                                    "    selection-background-color: #757779;\n"
-                                    "    selection-border: 2px solid white;\n"
-                                    "    outline: 0px;\n"
-                                    "}")
+        self.comboBox.setStyleSheet("QComboBox {color: white;background: #616366;border: 1px solid #616366;border-radius: "
+                           "3px;}QComboBox::drop-down{width: 30px;border-left-width: 1px;border-left-color: "
+                           "darkgray;border-left-style: solid;}QComboBox::down-arrow{image: url("
+                           "data/ressources/expandwhite.png);width: 16px;height: 16px;}")
         self.comboBox.setObjectName("comboBox")
         self.verticalLayout_2.addWidget(self.comboBox)
         self.verticalLayout.addWidget(self.groupBox)
@@ -84,6 +63,7 @@ class Ui_SettingsWindow(object):
         font.setFamily("Rubik")
         font.setPointSize(12)
         self.groupBox_2.setFont(font)
+        self.groupBox_2.setStyleSheet("color:white;")
         self.groupBox_2.setFlat(True)
         self.groupBox_2.setObjectName("groupBox_2")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.groupBox_2)
@@ -137,6 +117,7 @@ class Ui_SettingsWindow(object):
         font.setFamily("Rubik")
         font.setPointSize(12)
         self.groupBox_3.setFont(font)
+        self.groupBox_3.setStyleSheet("color:white;")
         self.groupBox_3.setFlat(True)
         self.groupBox_3.setObjectName("groupBox_3")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.groupBox_3)
@@ -182,7 +163,7 @@ class Ui_SettingsWindow(object):
         font.setFamily("Rubik")
         font.setPointSize(14)
         self.pushButton.setFont(font)
-        self.pushButton.setStyleSheet("QPushButton{\n"
+        self.pushButton.setStyleSheet("QPushButton{color:white;\n"
                                       "    background: #4cc321;\n"
                                       "    border: 2px solid #4cc321;\n"
                                       "    border-radius: 15px;\n"

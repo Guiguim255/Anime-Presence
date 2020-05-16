@@ -13,8 +13,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(575, 275)
-        MainWindow.setMinimumSize(QtCore.QSize(550, 250))
+        MainWindow.resize(650, 275)
+        MainWindow.setMinimumSize(QtCore.QSize(650, 250))
         MainWindow.setMaximumSize(QtCore.QSize(800, 350))
         font = QtGui.QFont()
         font.setFamily("Rubik")

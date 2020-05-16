@@ -7,7 +7,6 @@ import json
 
 
 class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
-
     onClose = pyqtSignal(bool)
 
     def __init__(self):
@@ -27,9 +26,20 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
         self.translation = json.load(json_file)
         json_file.close()
 
+        self.language = self.config_json["user_language"]
+
         for language in self.translation:
             self.comboBox.addItem(self.translation[language]["name"])
         self.comboBox.setCurrentText(self.translation[self.config_json["user_language"]]["name"])
+
+        self.groupBox.setTitle(self.translation[self.language]["language"].upper())
+
+        self.groupBox_2.setTitle(self.translation[self.language]["theme"].upper())
+        self.checkBox.setText(self.translation[self.language]["dark"])
+        self.checkBox_2.setText(self.translation[self.language]["light"])
+
+        self.groupBox_3.setTitle(self.translation[self.language]["personal application"].upper())
+        self.checkBox_3.setText(self.translation[self.language]["personal app id"])
 
         if self.config_json["theme"] == "dark":
             self.checkBox.setChecked(True)
@@ -58,7 +68,7 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
             self.lineEdit.setEnabled(False)
 
     def test_id(self):
-        if not(self.lineEdit.text()):return False
+        if not (self.lineEdit.text()): return False
         try:
             self.test_presence = Presence(self.lineEdit.text())
             self.test_presence.connect()
@@ -74,9 +84,9 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
                 self.config_json["App_ID"] = self.lineEdit.text()
             else:
                 self.lineEdit.setStyleSheet("QLineEdit{\n"
-                                    "    background: #616366;\n"
-                                    "    border: 2px solid #bc1a26;\n"
-                                    "}")
+                                            "    background: #616366;\n"
+                                            "    border: 2px solid #bc1a26;\n"
+                                            "}")
                 return self.error_label.show()
         else:
             self.config_json["App_ID"] = "697842560844038225"

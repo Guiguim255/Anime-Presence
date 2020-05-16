@@ -77,7 +77,6 @@ class AnimeLabel(QWidget):
         self.title = title
         if len(title) > 48:
             title = title[:46] + "..."
-            print(title)
             self.setToolTip(self.title)
         self.layout = QHBoxLayout()
 

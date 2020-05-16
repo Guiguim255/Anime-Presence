@@ -14,23 +14,30 @@ class UserInterface(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(UserInterface, self).__init__()
 
+        print("Setting up the window...")
         self.setupUi(self)
 
+        print("Loading settings window...")
         self.settingsWindow = Settings_UserInterface()
         self.settings_button.clicked.connect(self.openSettings)
         self.settingsWindow.onClose.connect(self.onSettingsClosed)
 
+        print("Loading configuration...")
         json_file = open("data/config.json", "r")
         self.config_json = json.load(json_file)
         json_file.close()
 
+        print("Loading languages...")
         json_file = open("data/translation.json", "r", encoding="UTF-8")
         self.translation = json.load(json_file)
         json_file.close()
 
-        client_id = self.config_json["App_ID"]  # You can put your own app ID
-        self.RPC = Presence(client_id)  # Initialize the client class
-        self.RPC.connect()  # Start the handshake loop
+        print("Initializing the presence...")
+        client_id = self.config_json["App_ID"]
+        self.RPC = Presence(client_id)
+        print("Connecting...")
+        self.RPC.connect()
+        print("Ready")
 
         self.language = self.config_json["user_language"]
         self.l_format = self.translation[self.language]["format"]
@@ -38,19 +45,24 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         self.infos = {}
 
         self.confirm_button.clicked.connect(self.on_confirm_button_clicked)
+        self.confirm_button.setText(self.translation[self.language]["confirm"])
+
+        self.title_label.setText(self.translation[self.language]["enter url"])
+
+        self.settings_button.setText(self.translation[self.language]["settings"])
 
         self.scrollView = AnimeScrollView()
         self.setFocusPolicy(Qt.StrongFocus)
         self.scrollView.clicked.connect(self.onLabelClick)
         self.urlLayout.addWidget(self.scrollView)
         self.url_entry.focusOutEvent = lambda event: self.handleFocus("exit")
-        self.url_entry.setPlaceholderText("Enter the name or the URL of the anime you're watching")
+        self.url_entry.setPlaceholderText(self.translation[self.language]["enter url"])
         self.url_entry.focusInEvent = lambda event: self.handleFocus("enter")
         self.url_entry.textEdited.connect(self.onEdit)
         self.scrollView.hide()
         self.fetcher = None
 
-        self.choice = WebsiteComboBox()
+        self.choice = WebsiteComboBox(self.translation[self.language])
         self.urlLayout.addWidget(self.choice)
         self.choice.hide()
 
@@ -163,13 +175,13 @@ class UserInterface(QMainWindow, Ui_MainWindow):
 
 
 class WebsiteComboBox(QComboBox):
-    def __init__(self):
+    def __init__(self, translate):
         super(WebsiteComboBox, self).__init__()
-        self.insertItem(0, "Sélectionner le site sur lequel vous regardez un anime (optionnel)")
+        self.insertItem(0, translate["select website"])
         self.insertItem(1, "Anime Digital Network")
         self.insertItem(2, "Crunchyroll")
         self.insertItem(3, "Wakanim")
-        self.insertItem(4, "Autre")
+        self.insertItem(4, translate["other"])
         self.model().item(0).setEnabled(False)
         self.setStyleSheet("QComboBox {background: #616366;border: 1px solid #616366;border-radius: "
                            "3px;}QComboBox::drop-down{width: 30px;border-left-width: 1px;border-left-color: "
