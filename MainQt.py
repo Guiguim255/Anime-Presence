@@ -45,7 +45,7 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         self.infos = {}
 
         self.confirm_button.clicked.connect(self.on_confirm_button_clicked)
-        self.confirm_button.setText(self.translation[self.language]["confirm"])
+        self.confirm_button.setText(self.translation[self.language]["start"])
 
         self.title_label.setText(self.translation[self.language]["enter url"])
 
@@ -67,20 +67,25 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         self.choice.hide()
 
     def on_confirm_button_clicked(self):
-        texte = self.url_entry.text()
-        if texte:
-            if texte.startswith("http") or texte.startswith("www"):
-                self.update_presence(texte, "url")
-                self.result_label.setStyleSheet("QLabel{color: #26bc1a;}")
-            else:
-                self.update_presence(texte, "name")
-            self.result_label.setText(self.translation[self.language]["updated presence"])
+        text = self.url_entry.text()
+        buttonText = self.confirm_button.text()
+        if buttonText == self.translation[self.language]["start"]:
+            if text:
+                self.confirm_button.setText(self.translation[self.language]["stop"])
+                if text.startswith("http") or text.startswith("www"):
+                    self.update_presence(text, "url")
+                    self.result_label.setStyleSheet("QLabel{color: #26bc1a;}")
+                else:
+                    self.update_presence(text, "name")
+                self.result_label.setText(self.translation[self.language]["updated presence"])
+        else:
+            self.RPC.clear()
+            self.confirm_button.setText(self.translation[self.language]["start"])
 
             """else:
                 self.result_label.setStyleSheet("QLabel{color: #bc1a26;}")
                 self.result_label.setText("Invalid url")"""
 
-            # self.url_entry.clear()
 
     def onLabelClick(self, text):
         self.url_entry.setText(text)
@@ -189,6 +194,7 @@ class WebsiteComboBox(QComboBox):
                            "data/ressources/expandwhite.png);width: 16px;height: 16px;}"
                            "QComboBox QAbstractItemView {border: 2px solid #616366; color: white; background-color: "
                            "#616366;selection-background-color: #757779; selection-border: 2px solid white;outline: 0px;}")
+
 app = QApplication(sys.argv)
 win = UserInterface()
 win.show()
