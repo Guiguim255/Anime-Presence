@@ -7,12 +7,19 @@
     "saison": "saison",
     "format": "anime_name, saison s_nb episode ep_nb",
 
-    "please enter url": "Veuillez entrer l'url de l'épisode que vous êtes en train de regarder:",
+    "enter url": "Entrez le nom ou l'url de l'anime que vous regardez",
+    "select website": "Sélectionnez le site sur lequel vous regardez un anime (facultatif)",
+    "other": "Autre",
     "confirm": "Confirmer",
     "updated presence": "Présence mise à jour",
 
     "settings": "Paramètres",
     "language": "Langue",
+    "theme": "thème",
+    "personal application": "application personnalisée",
+    "dark": "Sombre",
+    "light": "Clair",
+    "personal app id": "ID de l'app personnelle",
     "language changed": "La langue a été correctement modifiée, veuillez relancer le programme"
   },
 
@@ -24,12 +31,19 @@
     "saison": "saison",
     "format": "anime_name, saison s_nb episode ep_nb",
 
-    "please enter url": "Please enter the url of the episode you are watching:",
+    "enter url": "Enter the name or the url of the anime you are watching",
+    "select website": "Select the website on which you are viewing an anime (optional)",
+    "other": "Other",
     "confirm": "Confirm",
     "updated presence": "Updated presence",
 
     "settings": "Settings",
     "language": "Language",
+    "theme": "theme",
+    "personal application": "personal application",
+    "dark": "Dark",
+    "light": "Light",
+    "personal app id": "Personal app ID",
     "language changed": "The language has been changed correctly, please restart the program"
   },
 
@@ -41,12 +55,19 @@
     "saison": "seizoen",
     "format": "anime_name, saison s_nb episode ep_nb",
 
-    "please enter url": "Voer de url in van de aflevering die je bekijkt:",
+    "enter url": "Voer de naam of de url in van de anime die je bekijkt",
+    "select website": "Selecteer de website waarop je een anime bekijkt (optioneel)",
+    "other": "Andere",
     "confirm": "Bevestig",
     "updated presence": "Aanwezigheid bijgewerkt",
 
     "settings": "Instellingen",
     "language":"Taal",
+    "theme": "thema",
+    "personal application": "persoonlijke applicatie",
+    "dark": "Donkere",
+    "light": "Licht",
+    "personal app id": "Persoonlijke app ID",
     "language changed": "De taal is correct gewijzigd, start het programma opnieuw"
   }
 }

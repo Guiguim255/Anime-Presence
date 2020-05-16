@@ -1,108 +1,46 @@
 import json
+from requests import get
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
+headers={"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.119 Safari/537.36"}
 
-def get_image(infos):
+def getAnimeInfos(url):
+    html = get(url, headers = headers).text
+    soup = BeautifulSoup(html, "html.parser")
+    parsedUrl = urlparse(url)
+    netloc = parsedUrl[1]
+    website = ""
+    nEpisode = nSaison = "0"
+    if "episode" in url:
+        nEpisode = parsedUrl[2].split("/")[-1].split("-")[parsedUrl[2].split("/")[-1].split("-").index("episode") + 1]
+    if "saison" in url:
+        nSaison = parsedUrl[2].split("-")[parsedUrl[2].split("-").index("saison") + 1]
+        for i,val in enumerate(nSaison):
+            if not(val.isdigit()):
+                nSaison = "".join(nSaison[:i])
+                break
+    if "animedigitalnetwork" in netloc:
+        title = soup.find("meta", {"itemprop":"name"})["content"].split(" - ")[0]
+        website = "adn"
+    if netloc == "www.wakanim.tv":
+        website = "wakanim"
+        mainUrl = soup.find("a", {"class":"button -thin -outline"})["href"]
+        url2 = "://".join(parsedUrl[:2]) + mainUrl
+        soup2 = BeautifulSoup(get(url2, headers=headers).text, "html.parser")
+        title = soup2.find("meta", {"itemprop":"name"})["content"].rstrip()
+    if netloc == "www.crunchyroll.com":
+        website = "crunchyroll"
+        title = soup.find("meta", {"property":"og:title"})["content"]
     with open("data/database.json", "r") as f:
         db = json.load(f)
 
     try:
-        image = (db[infos["website"]])[infos["anime_name"]]
-        small_image = infos["website"] + "_logo"
+        image = db[website][title]
+        small_image = website + "_logo"
     except KeyError:
-        image = infos["website"] + "_logo"
-        small_image = "/"
+        image = website + "_logo"
+        small_image = ""
 
-    informations = infos
-    informations["image"] = image
-    informations["small_image"] = small_image
+    return {"website":website, "anime_name":title, "ep_nb":nEpisode, "s_nb":nSaison, "image":image, "small_image":small_image}
 
-    return informations
-
-
-def wakanim_info(url):
-    m = url
-    n = []
-    part = m[-1].replace("-", " ")
-
-    for word in part.split():
-        n.append(word)
-
-    try:
-        del (n[n.index("cour") + 1])
-        n.remove("cour")
-    except ValueError:
-        pass
-
-    del (n[-1])
-    saison = n[n.index("saison") + 1]
-    episode = n[n.index("episode") + 1]
-    nom = ""
-    for x in range(len(n) - 4):
-        nom += " " + n[x]
-    nom = nom.title()
-
-    x = []
-
-    for letter in nom:
-        x.append(letter)
-
-    x.remove(x[0])
-
-    nom = ""
-    for element in x:
-        nom += element
-
-    informations = {"website": "wakanim", "anime_name": nom, "s_nb": saison, "ep_nb": episode}
-
-    return informations
-
-
-def adn_infos(url):
-    n = []
-    nom = (url[3].replace("-", " ")).title()
-
-    part = url[-1].replace("-", " ")
-    for word in part.split():
-        n.append(word)
-
-    episode = n[n.index("episode") + 1]
-    saison = "/"
-
-    informations = {"website": "adn", "anime_name": nom, "s_nb": saison, "ep_nb": episode}
-
-    return informations
-
-
-def crunchyroll_info(url):
-    n = []
-    nom = (url[3].replace("-", " ")).title()
-
-    part = url[-1].replace("-", " ")
-    for word in part.split():
-        n.append(word)
-
-    episode = n[n.index("episode") + 1]
-    saison = "/"
-
-    informations = {"website": "crunchyroll", "anime_name": nom, "s_nb": saison, "ep_nb": episode}
-
-    return informations
-
-
-def get_anime_info(url):
-    url = url.replace("/", " ")
-    m = []
-    for element in url.split():
-        m.append(element)
-
-    if m[1] == "www.wakanim.tv":
-        return get_image(wakanim_info(m))
-
-    if m[1] == "www.animedigitalnetwork.fr" or "animedigitalnetwork.fr":
-        return get_image(adn_infos(m))
-
-    if m[1] == "www.crunchyroll.com":
-        return get_image(crunchyroll_info(m))
-
-    else:
-        pass
