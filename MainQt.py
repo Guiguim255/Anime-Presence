@@ -1,11 +1,11 @@
-from PyQt5.QtWidgets import QMainWindow, QComboBox, QApplication
+from PyQt5.QtWidgets import QMainWindow, QComboBox, QApplication, QSpinBox
 from PyQt5.QtCore import pyqtSlot, Qt
 from data.ui.AnimeLabel import AnimeScrollView, Fetcher
 from data.ui.Ui_AnimePresence_MainWindow import Ui_MainWindow
 from pypresence import Presence
 import json
 from time import time
-from anime_infos import getAnimeInfos
+from anime_infos import AnimeInfos
 from SettingsQt import Settings_UserInterface
 import sys
 
@@ -66,6 +66,13 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         self.urlLayout.addWidget(self.choice)
         self.choice.hide()
 
+        self.spinbox = QSpinBox()
+        self.spinbox.setStyleSheet("background: #616366; color:#FFFFFF; border-radius:3px; selection-color:#FFFFFF;selection-background-color:#616366")
+        self.spinbox.textFromValue = lambda x: f"{self.translation[self.language]['episode'].title()} {x}"
+        self.spinbox.setMinimum(1)
+        self.urlLayout.addWidget(self.spinbox)
+        self.spinbox.hide()
+
     def on_confirm_button_clicked(self):
         text = self.url_entry.text()
         buttonText = self.confirm_button.text()
@@ -73,10 +80,10 @@ class UserInterface(QMainWindow, Ui_MainWindow):
             if text:
                 self.confirm_button.setText(self.translation[self.language]["stop"])
                 if text.startswith("http") or text.startswith("www"):
-                    self.update_presence(text, "url")
+                    self.get_presence(text, "url")
                     self.result_label.setStyleSheet("QLabel{color: #26bc1a;}")
                 else:
-                    self.update_presence(text, "name")
+                    self.get_presence(text, "name")
                 self.result_label.setText(self.translation[self.language]["updated presence"])
         else:
             self.RPC.clear()
@@ -86,16 +93,22 @@ class UserInterface(QMainWindow, Ui_MainWindow):
                 self.result_label.setStyleSheet("QLabel{color: #bc1a26;}")
                 self.result_label.setText("Invalid url")"""
 
-
-    def onLabelClick(self, text):
-        self.url_entry.setText(text)
+    def onLabelClick(self, infos):
+        self.url_entry.setText(infos[0])
+        self.urlLabel = infos[1]
+        self.episode = infos[2]
+        if self.episode > 1:
+            self.spinbox.show()
+            self.spinbox.setMaximum(self.episode)
         self.scrollView.hide()
         self.choice.show()
+        self.spinbox.show()
         self.confirm_button.show()
 
     def handleFocus(self, event):
         if event == "enter":
             self.choice.hide()
+            self.spinbox.hide()
             if self.scrollView.animeLabels:
                 self.scrollView.show()
                 self.confirm_button.hide()
@@ -103,11 +116,14 @@ class UserInterface(QMainWindow, Ui_MainWindow):
             if not self.scrollView.hasFocus():
                 self.scrollView.hide()
                 self.confirm_button.show()
-            if not (self.url_entry.text().startswith("http") or self.url_entry.text().startswith("www")) and not self.scrollView.isVisible():
+            if not (self.url_entry.text().startswith("http") or self.url_entry.text().startswith(
+                    "www")) and not self.scrollView.isVisible() and self.url_entry.text():
                 self.choice.show()
+                self.spinbox.show()
 
     def onEdit(self, query):
         self.choice.hide()
+        self.spinbox.hide()
         if not (query.startswith("http") or query.startswith("www")):
             if not self.isRunning:
                 self.isRunning = True
@@ -150,14 +166,19 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         else:
             self.close()
 
-    def update_presence(self, text, type):
+    def get_presence(self, text, type):
         if type == "url":
-            infos = getAnimeInfos(text)
+            thread = AnimeInfos(text)
+            thread.infos.connect(self.update_presence)
+            thread.start()
         else:
             website = ["", "adn", "crunchyroll", "wakanim", ""][self.choice.currentIndex()]
-            infos = {"ep_nb": "0", "s_nb": "0", "anime_name": text, "website": "", "image": "", "small_image": ""}
+            infos = {"ep_nb": "0" if self.episode < 1 else str(self.spinbox.value()), "s_nb": "0", "anime_name": text, "website": "", "image": "", "small_image": ""}
             if website:
                 infos["image"] = website + "_logo"
+            self.update_presence(infos)
+
+    def update_presence(self, infos):
         state = self.generate_state(self.l_format, infos)
         self.actual_epoch = time()
         if infos["small_image"] and infos["image"]:
@@ -193,7 +214,8 @@ class WebsiteComboBox(QComboBox):
                            "darkgray;border-left-style: solid;}QComboBox::down-arrow{image: url("
                            "data/ressources/expandwhite.png);width: 16px;height: 16px;}"
                            "QComboBox QAbstractItemView {border: 2px solid #616366; color: white; background-color: "
-                           "#616366;selection-background-color: #757779; selection-border: 2px solid white;outline: 0px;}")
+                           "#616366;selection-background-color: #757779; selection-border: 2px solid white;outline: "
+                           "0px;}")
 
 app = QApplication(sys.argv)
 win = UserInterface()

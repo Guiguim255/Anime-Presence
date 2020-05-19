@@ -1,15 +1,16 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QScrollArea, QVBoxLayout
-from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QScrollArea, QVBoxLayout, QSizePolicy
 from PyQt5.QtGui import QPixmap, QPalette, QColor
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
 from itertools import zip_longest
 import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
+import re
 
+pattern = re.compile("([0-9]+) Episodes")
 
 class AnimeScrollView(QScrollArea):
-    clicked = pyqtSignal(str)
+    clicked = pyqtSignal(list)
 
     def __init__(self):
         super(AnimeScrollView, self).__init__()
@@ -59,24 +60,27 @@ class AnimeScrollView(QScrollArea):
         if not titles:
             self.hide()
 
-    def onClick(self, texte):
-        self.clicked.emit(texte)
+    def onClick(self, infos):
+        self.clicked.emit(infos)
 
 
 class AnimeLabel(QWidget):
-    labelClicked = pyqtSignal(str)
+    labelClicked = pyqtSignal(list)
 
-    def __init__(self, title, byteArray):
+    def __init__(self, title, byteArray, url, episode):
         super(AnimeLabel, self).__init__()
         palette = QPalette()
         palette.setColor(QPalette.Background, QColor("#46494D"))
         self.setPalette(palette)
         self.setAutoFillBackground(True)
 
+        self.url = url
+        self.episode = episode
+
         self.title = title
         if len(title) > 48:
             title = title[:46] + "..."
-            self.setToolTip(self.title)
+            self.setToolTip(f"<p style='color:black;white-space:pre'>{self.title}</p>")
         self.layout = QHBoxLayout()
 
         self.image = QPixmap()
@@ -98,7 +102,7 @@ class AnimeLabel(QWidget):
         self.setLayout(self.layout)
 
     def mousePressEvent(self, event) -> None:
-        self.labelClicked.emit(self.title)
+        self.labelClicked.emit([self.title, self.url, self.episode])
 
     def leaveEvent(self, event):
         palette = QPalette()
@@ -129,6 +133,9 @@ class Fetcher(QThread):
             async with aiohttp.ClientSession() as session:
                 page = await get(session, f"https://www.anime-gate.net/ajax/animes/suggest?search={self.query}", "text")
                 soup = BeautifulSoup(page, "html.parser")
+                divs = soup.find_all("div", {"class": "clearfix suggest"}) + soup.find_all("div", {"class":"clearfix suggest space-up"})
+                url= [x["data-url"] for x in divs]
+                episodes = [int(re.findall(pattern, x)[0]) for x in [x.text for x in divs]]
                 imgs = soup.find_all("img", {"class": "pull-left"})
                 imgLinks, titles = [*map(lambda x: x["src"], imgs)], [*map(lambda x: x["title"], imgs)]
                 tasks = []
@@ -136,7 +143,7 @@ class Fetcher(QThread):
                     task = asyncio.ensure_future(get(session, imgLink, "img"))
                     tasks.append(task)
                 imgArray = await asyncio.gather(*tasks)
-                self.finished.emit([*zip(titles, imgArray)])
+                self.finished.emit([*zip(titles, imgArray, url, episodes)])
 
         if self.query:
             loop = asyncio.new_event_loop()
@@ -145,5 +152,3 @@ class Fetcher(QThread):
             loop.run_until_complete(future)
         else:
             self.finished.emit([])
-
-

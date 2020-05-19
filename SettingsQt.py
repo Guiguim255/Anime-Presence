@@ -28,7 +28,7 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
 
         self.language = self.config_json["user_language"]
 
-        for language in self.translation:
+        for language in sorted(self.translation):
             self.comboBox.addItem(self.translation[language]["name"])
         self.comboBox.setCurrentText(self.translation[self.config_json["user_language"]]["name"])
 
@@ -40,6 +40,7 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
 
         self.groupBox_3.setTitle(self.translation[self.language]["personal application"].upper())
         self.checkBox_3.setText(self.translation[self.language]["personal app id"])
+        self.pushButton.setText(self.translation[self.language]["save"])
 
         if self.config_json["theme"] == "dark":
             self.checkBox.setChecked(True)
