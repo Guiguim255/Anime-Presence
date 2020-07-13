@@ -10,14 +10,14 @@ headers = {"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHT
 class AnimeInfos(QThread):
     infos = pyqtSignal(dict)
 
-    def __init__(self, url, type):
-        super(AnimeInfos, self).__init__()
+    def __init__(self, url, Type, **kwargs):
+        super(AnimeInfos, self).__init__(**kwargs)
         self.url = url
-        self.type = type
+        self.Type = Type
 
     def get(self, url):
         request = Request(url)
-        request.add_header(headers)
+        request.add_header("User-Agent",headers["User-Agent"])
         page = urlopen(request).read()
         return page
 

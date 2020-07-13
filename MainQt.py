@@ -1,36 +1,43 @@
-from PyQt5.QtWidgets import QMainWindow, QComboBox, QApplication, QSpinBox
-from PyQt5.QtCore import pyqtSlot, Qt
-from data.ui.AnimeLabel import AnimeScrollView, Fetcher
-from data.ui.Ui_AnimePresence_MainWindow import Ui_MainWindow
+from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtCore import pyqtSlot
+from data.ui.Theme import Theme
+from data.ui.Widgets import Fetcher
+from UI import MainWindow
 from pypresence import Presence
 import json
 from time import time
 from anime_infos import AnimeInfos
 from SettingsQt import Settings_UserInterface
 import sys
+import unicodedata
 
+class UserInterface(QMainWindow, MainWindow):
+    languageChanged = pyqtSlot(str)
+    themeChanged = pyqtSlot(str)
 
-class UserInterface(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(UserInterface, self).__init__()
 
-        print("Setting up the window...")
-        self.setupUi(self)
-
-        print("Loading settings window...")
-        self.settingsWindow = Settings_UserInterface()
-        self.settings_button.clicked.connect(self.openSettings)
-        self.settingsWindow.onClose.connect(self.onSettingsClosed)
+        print("Loading languages...")
+        with open("data/translation.json", "r", encoding = "UTF-8") as json_file:
+            self.translation = json.load(json_file)
 
         print("Loading configuration...")
-        json_file = open("data/config.json", "r")
-        self.config_json = json.load(json_file)
-        json_file.close()
+        with open("data/config.json", "r") as json_file:
+            self.config_json = json.load(json_file)
+        self.language = self.config_json["user_language"]
+        self.theme = Theme.get_theme(self.config_json["theme"])
+        self.l_format = self.translation[self.language]["format"]
 
-        print("Loading languages...")
-        json_file = open("data/translation.json", "r", encoding="UTF-8")
-        self.translation = json.load(json_file)
-        json_file.close()
+        print("Setting up the window and loading configuration...")
+        self.setupUi(self, self.theme, self.translation[self.language])
+
+        print("Loading settings window...")
+        self.settingsWindow = Settings_UserInterface(self.theme, self.translation[self.language])
+        self.settings_button.clicked.connect(self.openSettings)
+        self.settingsWindow.onClose.connect(self.onSettingsClosed)
+        self.settingsWindow.themeChanged.connect(self.setAllThemes)
+        self.settingsWindow.languageChanged.connect(self.setAllTexts)
 
         print("Initializing the presence...")
         client_id = self.config_json["App_ID"]
@@ -39,39 +46,47 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         self.RPC.connect()
         print("Ready")
 
-        self.language = self.config_json["user_language"]
-        self.l_format = self.translation[self.language]["format"]
         self.isRunning = False
         self.infos = {}
+        self.episode = 1
+        self.currentAnime = None
 
         self.confirm_button.clicked.connect(self.on_confirm_button_clicked)
-        self.confirm_button.setText(self.translation[self.language]["start"])
-
-        self.title_label.setText(self.translation[self.language]["enter url"])
-
-        self.settings_button.setText(self.translation[self.language]["settings"])
-
-        self.scrollView = AnimeScrollView()
-        self.setFocusPolicy(Qt.StrongFocus)
         self.scrollView.clicked.connect(self.onLabelClick)
         self.urlLayout.addWidget(self.scrollView)
         self.url_entry.focusOutEvent = lambda event: self.handleFocus("exit")
-        self.url_entry.setPlaceholderText(self.translation[self.language]["enter url"])
         self.url_entry.focusInEvent = lambda event: self.handleFocus("enter")
         self.url_entry.textEdited.connect(self.onEdit)
         self.scrollView.hide()
         self.fetcher = None
-
-        self.choice = WebsiteComboBox(self.translation[self.language])
-        self.urlLayout.addWidget(self.choice)
-        self.choice.hide()
-
-        self.spinbox = QSpinBox()
-        self.spinbox.setStyleSheet("background: #616366; color:#FFFFFF; border-radius:3px; selection-color:#FFFFFF;selection-background-color:#616366")
         self.spinbox.textFromValue = lambda x: f"{self.translation[self.language]['episode'].title()} {x}"
         self.spinbox.setMinimum(1)
-        self.urlLayout.addWidget(self.spinbox)
-        self.spinbox.hide()
+
+        self.previous.clicked.connect(lambda x: self.move(-1))
+
+        self.next.clicked.connect(lambda x: self.move(1))
+
+    @pyqtSlot(str)
+    def setAllTexts(self, language):
+        lang = ""
+        for l in self.translation:
+            if self.translation[l]["name"] == language:
+                lang = l
+        if lang != self.language:
+            print("Changing")
+            self.language = lang
+            self.setText(self.translation[self.language])
+            self.settingsWindow.setText(self.translation[self.language])
+            self.choice.setText(self.translation[self.language])
+
+    @pyqtSlot(str)
+    def setAllThemes(self, themeName):
+        if themeName != self.theme.name:
+            self.theme = Theme.get_theme(themeName)
+            self.setTheme(self.theme)
+            self.settingsWindow.setTheme(self.theme)
+            self.scrollView.setTheme(self.theme)
+            self.choice.setTheme(self.theme)
 
     def on_confirm_button_clicked(self):
         text = self.url_entry.text()
@@ -93,17 +108,20 @@ class UserInterface(QMainWindow, Ui_MainWindow):
                 self.result_label.setStyleSheet("QLabel{color: #bc1a26;}")
                 self.result_label.setText("Invalid url")"""
 
-    def onLabelClick(self, infos):
-        self.url_entry.setText(infos[0])
-        self.urlLabel = infos[1]
-        self.episode = infos[2]
-        if self.episode > 1:
-            self.spinbox.show()
-            self.spinbox.setMaximum(self.episode)
+    def onLabelClick(self, anime):
+        self.url_entry.setText(anime.mainTitle)
+        self.urlLabel = anime.mainTitle
+        self.maxEpisode = int(anime.epNb)
+        if self.maxEpisode > 1:
+            self.previous.show()
+            self.episodeLabel.show()
+            self.episodeLabel.setText(
+                f"<p align='center'>{self.translation[self.language]['episode'].capitalize()} 1</p>")
+            self.next.show()
         self.scrollView.hide()
         self.choice.show()
-        self.spinbox.show()
         self.confirm_button.show()
+        self.currentAnime = anime
 
     def handleFocus(self, event):
         if event == "enter":
@@ -145,7 +163,7 @@ class UserInterface(QMainWindow, Ui_MainWindow):
     def generate_state(self, lFormat, infos):
         nStr = lFormat
         nStr = nStr.replace("anime_name", infos["anime_name"])
-        if infos["ep_nb"] == "0":
+        if infos["ep_nb"] in ("0","1"):
             nStr = nStr[:len(infos["anime_name"])]
             return nStr
         if infos["s_nb"] == "0":
@@ -166,33 +184,57 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         else:
             self.close()
 
-    def get_presence(self, text, type):
-        if type == "url":
-            thread = AnimeInfos(text)
+    def move(self, d):
+        self.episode = self.episode + d if 1 <= self.episode + d <= self.maxEpisode else self.episode
+        self.episodeLabel.setText(
+            f"<p align='center'>{self.translation[self.language]['episode'].capitalize()} {self.episode}</p>")
+
+    def get_presence(self, text, Type):
+        if Type == "url":
+            thread = AnimeInfos(text, Type, parent = self)
             thread.infos.connect(self.update_presence)
             thread.start()
         else:
-            website = ["", "adn", "crunchyroll", "wakanim", ""][self.choice.currentIndex()]
-            infos = {"ep_nb": "0" if self.episode < 1 else str(self.spinbox.value()), "s_nb": "0", "anime_name": text, "website": "", "image": "", "small_image": ""}
-            if website:
-                infos["image"] = website + "_logo"
-            self.update_presence(infos)
+            if text.strip() == self.currentAnime.mainTitle:
+                website = ["", "adn", "crunchyroll", "wakanim", ""][self.choice.currentIndex()]
+                infos = {"ep_nb": str(self.currentAnime.epNb), "s_nb": "0", "anime_name": self.currentAnime.mainTitle,
+                         "website": "", "image": "re_zero_kara_hajimeru_isekai_sei", "small_image": ""}
+                print(self.normalize(self.currentAnime.mainTitle))
+                if website:
+                    infos["image"] = website + "_logo"
+                self.update_presence(infos)
+            else:
+                website = ["", "adn", "crunchyroll", "wakanim", ""][self.choice.currentIndex()]
+                infos = {"ep_nb": "0" if self.episode < 1 else str(self.episode), "s_nb": "0", "anime_name": text,
+                         "website": "", "image": "", "small_image": ""}
+                if website:
+                    infos["image"] = website + "_logo"
+                self.update_presence(infos)
 
     def update_presence(self, infos):
         state = self.generate_state(self.l_format, infos)
         self.actual_epoch = time()
         if infos["small_image"] and infos["image"]:
-            self.RPC.update(details=self.translation[self.language]["watching an anime"], state=state,
-                            large_image=infos["image"],
-                            small_image=infos["small_image"],
-                            start=self.actual_epoch)
+            self.RPC.update(details = self.translation[self.language]["watching an anime"], state = state,
+                            large_image = infos["image"],
+                            small_image = infos["small_image"],
+                            start = self.actual_epoch)
         elif infos["image"]:
-            self.RPC.update(details=self.translation[self.language]["watching an anime"], state=state,
-                            large_image=infos["image"],
-                            start=self.actual_epoch)
+            self.RPC.update(details = self.translation[self.language]["watching an anime"], state = state,
+                            large_image = infos["image"],
+                            start = self.actual_epoch)
         else:
-            self.RPC.update(details=self.translation[self.language]["watching an anime"], state=state,
-                            start=self.actual_epoch)
+            self.RPC.update(details = self.translation[self.language]["watching an anime"], state = state,
+                            start = self.actual_epoch)
+
+    def normalize(self, string):
+        string = list(unicodedata.normalize("NFKD", string).encode("ascii","ignore").decode("ascii").lower())
+        for i in range(len(string)):
+            if string[i] in ["\\", "/", ":", "*", "<", ">", "|", " "]:
+                string[i] = "_"
+            elif string[i] == "?":
+                string[i] = ""
+        return "".join(string)[:32]
 
     @pyqtSlot()
     def closeEvent(self, event):
@@ -200,24 +242,7 @@ class UserInterface(QMainWindow, Ui_MainWindow):
         event.accept()
 
 
-class WebsiteComboBox(QComboBox):
-    def __init__(self, translate):
-        super(WebsiteComboBox, self).__init__()
-        self.insertItem(0, translate["select website"])
-        self.insertItem(1, "Anime Digital Network")
-        self.insertItem(2, "Crunchyroll")
-        self.insertItem(3, "Wakanim")
-        self.insertItem(4, translate["other"])
-        self.model().item(0).setEnabled(False)
-        self.setStyleSheet("QComboBox {background: #616366;border: 1px solid #616366;border-radius: "
-                           "3px;}QComboBox::drop-down{width: 30px;border-left-width: 1px;border-left-color: "
-                           "darkgray;border-left-style: solid;}QComboBox::down-arrow{image: url("
-                           "data/ressources/expandwhite.png);width: 16px;height: 16px;}"
-                           "QComboBox QAbstractItemView {border: 2px solid #616366; color: white; background-color: "
-                           "#616366;selection-background-color: #757779; selection-border: 2px solid white;outline: "
-                           "0px;}")
-
 app = QApplication(sys.argv)
 win = UserInterface()
 win.show()
-sys.exit(app.exec_())
+app.exec_()

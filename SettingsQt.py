@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtGui import  QStandardItemModel, QStandardItem
 from data.ui.SettingsWindow import Ui_SettingsWindow
 
 from pypresence import Presence, ServerError
@@ -8,11 +9,15 @@ import json
 
 class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
     onClose = pyqtSignal(bool)
+    languageChanged = pyqtSignal(str)
+    themeChanged = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self, theme, tr):
         super(Settings_UserInterface, self).__init__()
 
-        self.setupUi(self)
+        self.theme = theme
+        self.tr = tr
+        self.setupUi(self, self.theme, self.tr)
 
         self.test_presence = None
 
@@ -29,18 +34,9 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
         self.language = self.config_json["user_language"]
 
         for language in sorted(self.translation):
-            self.comboBox.addItem(self.translation[language]["name"])
+            self.comboBox.addItem(self.translation[language]["name"], language)
         self.comboBox.setCurrentText(self.translation[self.config_json["user_language"]]["name"])
 
-        self.groupBox.setTitle(self.translation[self.language]["language"].upper())
-
-        self.groupBox_2.setTitle(self.translation[self.language]["theme"].upper())
-        self.checkBox.setText(self.translation[self.language]["dark"])
-        self.checkBox_2.setText(self.translation[self.language]["light"])
-
-        self.groupBox_3.setTitle(self.translation[self.language]["personal application"].upper())
-        self.checkBox_3.setText(self.translation[self.language]["personal app id"])
-        self.pushButton.setText(self.translation[self.language]["save"])
 
         if self.config_json["theme"] == "dark":
             self.checkBox.setChecked(True)
@@ -58,7 +54,7 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
             self.lineEdit.setEnabled(False)
 
         self.checkBox_3.stateChanged.connect(self.chehd)
-
+        self.comboBox.currentTextChanged.connect(self.onLangageChanged)
         self.pushButton.clicked.connect(self.save_changes)
 
     def chehd(self):
@@ -68,8 +64,15 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
             self.lineEdit.clear()
             self.lineEdit.setEnabled(False)
 
+    def onLangageChanged(self, value):
+        for language in self.translation:
+            if language == value:
+                self.languageChanged.emit(language)
+
+
     def test_id(self):
-        if not (self.lineEdit.text()): return False
+        if not (self.lineEdit.text()):
+            return False
         try:
             self.test_presence = Presence(self.lineEdit.text())
             self.test_presence.connect()
@@ -85,7 +88,7 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
                 self.config_json["App_ID"] = self.lineEdit.text()
             else:
                 self.lineEdit.setStyleSheet("QLineEdit{\n"
-                                            "    background: #616366;\n"
+                                            f"    background: {self.theme.mainBackgroundColor};\n"
                                             "    border: 2px solid #bc1a26;\n"
                                             "}")
                 return self.error_label.show()
@@ -109,10 +112,9 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
 
     @pyqtSlot()
     def closeEvent(self, event):
-        self.lineEdit.setStyleSheet("QLineEdit{\n"
-                                    "    background: #616366;\n"
-                                    "    border: 2px solid #616366;\n"
-                                    "}")
         if self.test_presence:
             self.test_presence.close()
         self.onClose.emit(self.closeBySave)
+        if self.closeBySave:
+            self.languageChanged.emit(self.comboBox.currentText())
+            self.themeChanged.emit("dark" if self.checkBox.checkState() else "light")

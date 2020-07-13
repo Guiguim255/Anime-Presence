@@ -2,6 +2,7 @@
   "fr": {
     "name": "Français",
 
+    "title": "Anime Presence",
     "watching an anime": "Regarde un anime",
     "episode": "épisode",
     "saison": "saison",
@@ -23,12 +24,16 @@
     "personal app id": "ID de l'app personnelle",
     "language changed": "La langue a été correctement modifiée, veuillez relancer le programme",
     "start": "Démarrer",
-    "stop": "Arrêter"
+    "stop": "Arrêter",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "error": "ID de l'application invalide"
   },
 
   "en": {
     "name": "English",
 
+    "title": "Anime Presence",
     "watching an anime": "Watching an anime",
     "episode": "episode",
     "saison": "saison",
@@ -50,12 +55,16 @@
     "personal app id": "Personal app ID",
     "language changed": "The language has been changed correctly, please restart the program",
     "start": "Start",
-    "stop": "Stop"
+    "stop": "Stop",
+    "previous": "Previous",
+    "next": "Next",
+    "error": "Invalid app ID"
   },
 
   "ndl": {
     "name": "Nederlands",
 
+    "title": "Anime Presence",
     "watching an anime": "Kijken naar een anime",
     "episode": "episode",
     "saison": "seizoen",
