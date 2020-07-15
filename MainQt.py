@@ -197,7 +197,7 @@ class UserInterface(QMainWindow, MainWindow):
         else:
             if text.strip() == self.currentAnime.mainTitle:
                 website = ["", "adn", "crunchyroll", "wakanim", ""][self.choice.currentIndex()]
-                infos = {"ep_nb": str(self.currentAnime.epNb), "s_nb": "0", "anime_name": self.currentAnime.mainTitle,
+                infos = {"ep_nb": str(self.episode), "s_nb": "0", "anime_name": self.currentAnime.mainTitle,
                          "website": "", "image": "re_zero_kara_hajimeru_isekai_sei", "small_image": ""}
                 print(self.normalize(self.currentAnime.mainTitle))
                 if website:
