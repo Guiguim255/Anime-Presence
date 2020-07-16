@@ -22,7 +22,6 @@
     "dark": "Sombre",
     "light": "Clair",
     "personal app id": "ID de l'app personnelle",
-    "language changed": "La langue a été correctement modifiée, veuillez relancer le programme",
     "start": "Démarrer",
     "stop": "Arrêter",
     "previous": "Précédent",
@@ -53,7 +52,6 @@
     "dark": "Dark",
     "light": "Light",
     "personal app id": "Personal app ID",
-    "language changed": "The language has been changed correctly, please restart the program",
     "start": "Start",
     "stop": "Stop",
     "previous": "Previous",
@@ -84,8 +82,10 @@
     "dark": "Donkere",
     "light": "Licht",
     "personal app id": "Persoonlijke app ID",
-    "language changed": "De taal is correct gewijzigd, start het programma opnieuw",
     "start": "Start",
-    "stop": "Stop"
+    "stop": "Stop",
+    "previous": "Vroeger",
+    "next": "Volgend",
+    "error": "Ongeldig app ID"
   }
 }
