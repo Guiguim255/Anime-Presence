@@ -3,10 +3,10 @@
     "name": "Français",
 
     "title": "Anime Presence",
-    "watching an anime": "Regarde un anime",
+    "watching": "Regarde",
     "episode": "épisode",
     "saison": "saison",
-    "format": "anime_name, saison s_nb episode ep_nb",
+    "format": "{saison} {episode}",
 
     "enter url": "Entrez le nom ou l'url de l'anime que vous regardez",
     "select website": "Sélectionnez le site sur lequel vous regardez un anime (facultatif)",
@@ -33,10 +33,10 @@
     "name": "English",
 
     "title": "Anime Presence",
-    "watching an anime": "Watching an anime",
+    "watching": "Watching an anime",
     "episode": "episode",
     "saison": "saison",
-    "format": "anime_name, saison s_nb episode ep_nb",
+    "format": "{saison} {episode}",
 
     "enter url": "Enter the name or the url of the anime you are watching",
     "select website": "Select the website on which you are viewing an anime (optional)",
@@ -63,10 +63,10 @@
     "name": "Nederlands",
 
     "title": "Anime Presence",
-    "watching an anime": "Kijken naar een anime",
+    "watching": "Kijken naar een anime",
     "episode": "episode",
     "saison": "seizoen",
-    "format": "anime_name, saison s_nb episode ep_nb",
+    "format": "{saison} {episode}",
 
     "enter url": "Voer de naam of de url in van de anime die je bekijkt",
     "select website": "Selecteer de website waarop je een anime bekijkt (optioneel)",

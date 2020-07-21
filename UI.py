@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from data.ui.Widgets import AnimeScrollView, WebsiteComboBox, EpisodeBox
+from data.ui.Widgets import AnimeScrollView, WebsiteComboBox
 
 class MainWindow():
 
@@ -55,26 +55,6 @@ class MainWindow():
         self.urlLayout.addWidget(self.spinbox)
         self.spinbox.hide()
 
-        self.buttonLayout = QtWidgets.QHBoxLayout(self.centralwidget)
-
-        self.previous = QtWidgets.QPushButton(self.centralwidget)
-        self.previous.setText("⏮")
-        self.previous.setFlat(True)
-        self.previous.hide()
-        self.buttonLayout.addWidget(self.previous)
-
-        self.episodeLabel = QtWidgets.QLabel(self.centralwidget)
-        self.episodeLabel.hide()
-        self.buttonLayout.addWidget(self.episodeLabel)
-
-        self.next = QtWidgets.QPushButton(self.centralwidget)
-        self.next.setText("⏭")
-        self.next.setObjectName("next")
-        self.next.setFlat(True)
-        self.next.hide()
-        self.buttonLayout.addWidget(self.next)
-        self.urlLayout.addLayout(self.buttonLayout)
-
         self.horizontalLayout_2.addLayout(self.urlLayout)
 
         spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -117,18 +97,16 @@ class MainWindow():
         self.verticalLayout.addLayout(self.horizontalLayout_4)
         MainWindow.setCentralWidget(self.centralwidget)
 
-        self.buttonLayout.parentWidget().setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
         self.setText(json)
         self.setTheme(self.theme)
 
     def setText(self, json):
         self.MainWindow.setWindowTitle(json["title"])
         self.title_label.setText(json["enter url"])
-        self.confirm_button.setText(json["confirm"])
+        self.confirm_button.setText(json["start"])
         self.settings_button.setText(json["settings"])
-        self.previous.setToolTip(json["previous"])
-        self.next.setToolTip(json["next"])
         self.url_entry.setPlaceholderText(json["enter url"])
+        self.spinbox.lineEdit().setPlaceholderText(json["episode"].capitalize())
 
 
     def setTheme(self, theme):
@@ -166,3 +144,4 @@ class MainWindow():
                                            f"    background: {theme.altBackgroundColor};\n"
                                            f"    border: 2px solid {theme.altBackgroundColor};\n"
                                            "}")
+        self.spinbox.setStyleSheet(f"background-color: {theme.altBackgroundColor}; color: {theme.fontColor}; border-color: {theme.fontColor}")

@@ -6,6 +6,7 @@ from data.ui.SettingsWindow import Ui_SettingsWindow
 from pypresence import Presence, ServerError
 import json
 
+ORIGINAL_APP_ID = "697842560844038225"
 
 class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
     onClose = pyqtSignal(bool)
@@ -45,7 +46,7 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
             self.checkBox.setChecked(False)
             self.checkBox_2.setChecked(True)
 
-        if self.config_json["App_ID"] != "697842560844038225":
+        if self.config_json["App_ID"] != ORIGINAL_APP_ID:
             self.checkBox_3.setChecked(True)
             self.lineEdit.setEnabled(True)
             self.lineEdit.setText(self.config_json["App_ID"])
@@ -93,7 +94,7 @@ class Settings_UserInterface(QMainWindow, Ui_SettingsWindow):
                                             "}")
                 return self.error_label.show()
         else:
-            self.config_json["App_ID"] = "697842560844038225"
+            self.config_json["App_ID"] = ORIGINAL_APP_ID
 
         for language in self.translation:
             if self.translation[language]["name"] == self.comboBox.currentText():

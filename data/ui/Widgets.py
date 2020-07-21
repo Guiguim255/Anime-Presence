@@ -182,15 +182,6 @@ class WebsiteComboBox(QComboBox):
         self.model().item(0).setEnabled(False)
 
 
-
-class EpisodeBox(QSpinBox):
-
-    def __init__(self, min, max):
-        super(EpisodeBox, self).__init__()
-        self.lineEdit().setPlaceholderText("Episode")
-        self.setMinimum(min)
-        self.setMaximum(max)
-
 class Fetcher(QThread):
     finished = pyqtSignal(list)
 

@@ -11,6 +11,7 @@ from SettingsQt import Settings_UserInterface
 import sys
 import unicodedata
 
+
 class UserInterface(QMainWindow, MainWindow):
     languageChanged = pyqtSlot(str)
     themeChanged = pyqtSlot(str)
@@ -62,10 +63,6 @@ class UserInterface(QMainWindow, MainWindow):
         self.spinbox.textFromValue = lambda x: f"{self.translation[self.language]['episode'].title()} {x}"
         self.spinbox.setMinimum(1)
 
-        self.previous.clicked.connect(lambda x: self.move(-1))
-
-        self.next.clicked.connect(lambda x: self.move(1))
-
     @pyqtSlot(str)
     def setAllTexts(self, language):
         lang = ""
@@ -101,6 +98,7 @@ class UserInterface(QMainWindow, MainWindow):
                     self.get_presence(text, "name")
                 self.result_label.setText(self.translation[self.language]["updated presence"])
         else:
+            self.result_label.clear()
             self.RPC.clear()
             self.confirm_button.setText(self.translation[self.language]["start"])
 
@@ -113,11 +111,8 @@ class UserInterface(QMainWindow, MainWindow):
         self.urlLabel = anime.mainTitle
         self.maxEpisode = int(anime.epNb)
         if self.maxEpisode > 1:
-            self.previous.show()
-            self.episodeLabel.show()
-            self.episodeLabel.setText(
-                f"<p align='center'>{self.translation[self.language]['episode'].capitalize()} 1</p>")
-            self.next.show()
+            self.spinbox.show()
+            self.spinbox.setMaximum(anime.epNb)
         self.scrollView.hide()
         self.choice.show()
         self.confirm_button.show()
@@ -161,17 +156,12 @@ class UserInterface(QMainWindow, MainWindow):
         self.isRunning = False
 
     def generate_state(self, lFormat, infos):
-        nStr = lFormat
-        nStr = nStr.replace("anime_name", infos["anime_name"])
-        if infos["ep_nb"] in ("0","1"):
-            nStr = nStr[:len(infos["anime_name"])]
-            return nStr
-        if infos["s_nb"] == "0":
-            nStr = nStr.replace("ep_nb", infos["ep_nb"])
-            nStr = nStr.replace(" saison s_nb", "")
-            return nStr
-        nStr = nStr.replace("s_nb", infos["s_nb"]).replace("ep_nb", infos["ep_nb"])
-        return nStr
+        episode, saison = "", ""
+        if infos.get("s_nb", "0") not in ("0", "1"):
+            saison = f"{self.translation[self.language]['saison'].capitalize()} {infos['s_nb']}"
+        if infos.get("ep_nb", "0") != "0":
+            episode = f"{self.translation[self.language]['episode'].capitalize()} {infos['ep_nb']}"
+        return lFormat.format(saison = saison, episode = episode)
 
     def openSettings(self):
         self.hide()
@@ -184,11 +174,6 @@ class UserInterface(QMainWindow, MainWindow):
         else:
             self.close()
 
-    def move(self, d):
-        self.episode = self.episode + d if 1 <= self.episode + d <= self.maxEpisode else self.episode
-        self.episodeLabel.setText(
-            f"<p align='center'>{self.translation[self.language]['episode'].capitalize()} {self.episode}</p>")
-
     def get_presence(self, text, Type):
         if Type == "url":
             thread = AnimeInfos(text, Type, parent = self)
@@ -198,7 +183,7 @@ class UserInterface(QMainWindow, MainWindow):
             if text.strip() == self.currentAnime.mainTitle:
                 website = ["", "adn", "crunchyroll", "wakanim", ""][self.choice.currentIndex()]
                 infos = {"ep_nb": str(self.episode), "s_nb": "0", "anime_name": self.currentAnime.mainTitle,
-                         "website": "", "image": "re_zero_kara_hajimeru_isekai_sei", "small_image": ""}
+                         "website": "", "image": self.normalize(self.currentAnime.mainTitle)}
                 print(self.normalize(self.currentAnime.mainTitle))
                 if website:
                     infos["image"] = website + "_logo"
@@ -212,23 +197,17 @@ class UserInterface(QMainWindow, MainWindow):
                 self.update_presence(infos)
 
     def update_presence(self, infos):
-        state = self.generate_state(self.l_format, infos)
+        infos["details"] = self.generate_state(self.l_format, infos)
         self.actual_epoch = time()
-        if infos["small_image"] and infos["image"]:
-            self.RPC.update(details = self.translation[self.language]["watching an anime"], state = state,
-                            large_image = infos["image"],
-                            small_image = infos["small_image"],
-                            start = self.actual_epoch)
-        elif infos["image"]:
-            self.RPC.update(details = self.translation[self.language]["watching an anime"], state = state,
-                            large_image = infos["image"],
-                            start = self.actual_epoch)
-        else:
-            self.RPC.update(details = self.translation[self.language]["watching an anime"], state = state,
-                            start = self.actual_epoch)
+        params = {"start": self.actual_epoch,
+                  "state": f"{self.translation[self.language]['watching']} {infos['anime_name']}"}
+        for arg in ("large_image", "small_image", "details"):
+            if infos.get(arg):
+                params[arg] = infos[arg]
+        self.RPC.update(**params)
 
     def normalize(self, string):
-        string = list(unicodedata.normalize("NFKD", string).encode("ascii","ignore").decode("ascii").lower())
+        string = list(unicodedata.normalize("NFKD", string).encode("ascii", "ignore").decode("ascii").lower())
         for i in range(len(string)):
             if string[i] in ["\\", "/", ":", "*", "<", ">", "|", " "]:
                 string[i] = "_"
