@@ -20,7 +20,7 @@ def normalize(string):
             string[i] = "_"
         elif string[i] == "?":
             string[i] = ""
-    return f'{"".join(string)[:32]}{string_hash:x}'
+    return f'{"".join(string)[:32-len(str(string_hash))]}{string_hash:x}'
 
 
 class UserInterface(QMainWindow, MainWindow):
@@ -60,7 +60,7 @@ class UserInterface(QMainWindow, MainWindow):
 
         self.isRunning = False
         self.infos = {}
-        self.episode = 1
+        self.episode = 0
         self.currentAnime = None
 
         self.confirm_button.clicked.connect(self.on_confirm_button_clicked)
@@ -73,6 +73,7 @@ class UserInterface(QMainWindow, MainWindow):
         self.fetcher = None
         self.spinbox.textFromValue = lambda x: f"{self.translation[self.language]['episode'].title()} {x}"
         self.spinbox.setMinimum(1)
+        self.spinbox.valueChanged.connect(self.update_episode)
 
     @pyqtSlot(str)
     def setAllTexts(self, language):
@@ -95,6 +96,9 @@ class UserInterface(QMainWindow, MainWindow):
             self.settingsWindow.setTheme(self.theme)
             self.scrollView.setTheme(self.theme)
             self.choice.setTheme(self.theme)
+
+    def update_episode(self):
+        self.episode = self.spinbox.value()
 
     def on_confirm_button_clicked(self):
         text = self.url_entry.text()

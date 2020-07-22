@@ -184,7 +184,6 @@ class Ui_SettingsWindow(object):
 
     def setTheme(self, theme):
         self.theme = theme
-        print(type(theme))
         self.MainWindow.setStyleSheet(f"QMainWindow{{background-color: {self.theme.mainBackgroundColor};\n"
                                           f"color: {self.theme.fontColor}; {'border-top: 2px solid #F0F0F0' if self.theme.name == 'light' else ''}}}"
                                       f"QAbstractItemView {{border: 1px solid {theme.fontColor}; color: {self.theme.fontColor}; background-color: "
