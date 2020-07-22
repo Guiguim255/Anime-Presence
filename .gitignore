@@ -1,0 +1,7 @@
+# Pycache
+__pycache__/
+# Pycharm project file
+.idea/
+
+# Personal configuration file
+data/config.json

@@ -5,11 +5,22 @@ from data.ui.Widgets import Fetcher
 from UI import MainWindow
 from pypresence import Presence
 import json
-from time import time
+import time
 from anime_infos import AnimeInfos
 from SettingsQt import Settings_UserInterface
 import sys
 import unicodedata
+
+
+def normalize(string):
+    string_hash = sum([ord(char) for char in string])
+    string = list(unicodedata.normalize("NFKD", string).encode("ascii", "ignore").decode("ascii").lower())
+    for i in range(len(string)):
+        if string[i] in ["\\", "/", ":", "*", "<", ">", "|", " "]:
+            string[i] = "_"
+        elif string[i] == "?":
+            string[i] = ""
+    return f'{"".join(string)[:32]}{string_hash:x}'
 
 
 class UserInterface(QMainWindow, MainWindow):
@@ -156,12 +167,14 @@ class UserInterface(QMainWindow, MainWindow):
         self.isRunning = False
 
     def generate_state(self, lFormat, infos):
-        episode, saison = "", ""
+        episode, ep_nb, saison, s_nb = "", "", "", ""
         if infos.get("s_nb", "0") not in ("0", "1"):
-            saison = f"{self.translation[self.language]['saison'].capitalize()} {infos['s_nb']}"
+            saison = self.translation[self.language]['saison'].capitalize()
+            s_nb = infos['s_nb']
         if infos.get("ep_nb", "0") != "0":
-            episode = f"{self.translation[self.language]['episode'].capitalize()} {infos['ep_nb']}"
-        return lFormat.format(saison = saison, episode = episode)
+            episode = self.translation[self.language]['episode'].capitalize()
+            ep_nb = infos['ep_nb']
+        return lFormat.format(saison=saison, s_nb=s_nb, episode=episode, ep_nb=ep_nb)
 
     def openSettings(self):
         self.hide()
@@ -180,40 +193,26 @@ class UserInterface(QMainWindow, MainWindow):
             thread.infos.connect(self.update_presence)
             thread.start()
         else:
-            if text.strip() == self.currentAnime.mainTitle:
-                website = ["", "adn", "crunchyroll", "wakanim", ""][self.choice.currentIndex()]
-                infos = {"ep_nb": str(self.episode), "s_nb": "0", "anime_name": self.currentAnime.mainTitle,
-                         "website": "", "image": self.normalize(self.currentAnime.mainTitle)}
-                print(self.normalize(self.currentAnime.mainTitle))
-                if website:
-                    infos["image"] = website + "_logo"
-                self.update_presence(infos)
-            else:
-                website = ["", "adn", "crunchyroll", "wakanim", ""][self.choice.currentIndex()]
-                infos = {"ep_nb": "0" if self.episode < 1 else str(self.episode), "s_nb": "0", "anime_name": text,
-                         "website": "", "image": "", "small_image": ""}
-                if website:
-                    infos["image"] = website + "_logo"
-                self.update_presence(infos)
+            website = ["", "adn_logo", "crunchyroll_logo", "wakanim_logo", ""][self.choice.currentIndex()]
+            infos = {"ep_nb": str(self.episode), "s_nb": "0", "anime_name": self.currentAnime.mainTitle,
+                     "website": website, "image": normalize(self.currentAnime.mainTitle)}
+            self.update_presence(infos)
 
     def update_presence(self, infos):
-        infos["details"] = self.generate_state(self.l_format, infos)
-        self.actual_epoch = time()
-        params = {"start": self.actual_epoch,
-                  "state": f"{self.translation[self.language]['watching']} {infos['anime_name']}"}
-        for arg in ("large_image", "small_image", "details"):
-            if infos.get(arg):
-                params[arg] = infos[arg]
-        self.RPC.update(**params)
+        params = {"start": time.time(),
+                  "details": f"{self.translation[self.language]['watching']} {infos['anime_name']}",
+                  "state": self.generate_state(self.l_format, infos)}
 
-    def normalize(self, string):
-        string = list(unicodedata.normalize("NFKD", string).encode("ascii", "ignore").decode("ascii").lower())
-        for i in range(len(string)):
-            if string[i] in ["\\", "/", ":", "*", "<", ">", "|", " "]:
-                string[i] = "_"
-            elif string[i] == "?":
-                string[i] = ""
-        return "".join(string)[:32]
+        response = self.RPC.update(**{"large_image": infos["image"]})
+        if response["data"]["assets"].get("large_image"):
+            params["large_image"] = infos["image"]
+            if infos["website"]:
+                params["small_image"] = infos["website"]
+        else:
+            if infos["website"]:
+                params["large_image"] = infos["website"]
+
+        self.RPC.update(**params)
 
     @pyqtSlot()
     def closeEvent(self, event):
