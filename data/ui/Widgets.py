@@ -1,22 +1,21 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QScrollArea, QVBoxLayout, QSizePolicy, QSpinBox, QComboBox
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QScrollArea, QVBoxLayout, QSizePolicy, QComboBox
 from PyQt5.QtGui import QPixmap, QPalette, QColor
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
 from itertools import zip_longest
 import asyncio
 import aiohttp
-from bs4 import BeautifulSoup
 
 class Anime:
 
-    def __init__(self, urlImage, mainTitle, note, type_, epNb, releasedDate, altTitle):
-        self.mainTitle = mainTitle
+    def __init__(self, urlImage, title, type_, epNb, releasedDate, duration, description):
+        self.title = title
         self.urlImage = urlImage
         self.type = type_
         self.epNb = epNb
         self.releasedDate = releasedDate
-        self.note = note
         self.dataImage = None
-        self.altTitle = altTitle
+        self.duration = duration
+        self.description = description
 
     def setData(self, data):
         self.dataImage = data
@@ -113,7 +112,7 @@ class AnimeLabel(QWidget):
         self.titleLabel = QLabel(self)
         self.titleLabel.setWordWrap(True)
         self.titleLabel.setTextFormat(Qt.RichText)
-        title = self.anime.mainTitle
+        title = self.anime.title
         if len(title) > 48:
             title = title[:46] + "..."
         self.titleLabel.setText(
@@ -133,10 +132,8 @@ class AnimeLabel(QWidget):
         palette = QPalette()
         palette.setColor(QPalette.Background, QColor(theme.mainBackgroundColor))
         self.setPalette(palette)
-        if len(self.anime.mainTitle) > 48:
-            self.setToolTip(f"<p style='white-space:pre'>{self.anime.mainTitle} ({self.anime.releasedDate})</p>")
-        elif self.anime.altTitle:
-            self.setToolTip(f"<p style='white-space:pre'>{self.anime.altTitle} ({self.anime.releasedDate})</p>")
+        if len(self.anime.title) > 48:
+            self.setToolTip(f"<p style='white-space:pre'>{self.anime.title} ({self.anime.releasedDate})</p>")
 
     def mousePressEvent(self, event) -> None:
         self.labelClicked.emit(self.anime)
@@ -189,21 +186,6 @@ class Fetcher(QThread):
         super(Fetcher, self).__init__()
         self.query = query
 
-    def parse(self, div):
-        text = div.text
-        text = [x.strip() for x in text.split("\n") if x.strip()]
-        dic = {"altTitle": "", "urlImage": div.img["src"], "mainTitle": text[0]}
-        if len(text) == 4:
-            dic["altTitle"] = text[1][1:].lstrip()
-        dic["note"] = text[-1]
-        t = text[-2].split(" - ")
-        if not t[1].startswith("?"):
-            t[1] = int(t[1].split()[0])
-        else:
-            t[1] = 0
-        dic["type_"], dic["epNb"], dic["releasedDate"] = t[0], t[1], t[2]
-        return Anime(**dic)
-
     async def get(self, session, url, contentType):
         async with session.get(url) as response:
             if contentType == "text":
@@ -213,23 +195,63 @@ class Fetcher(QThread):
     def run(self):
         async def main():
             async with aiohttp.ClientSession() as session:
-                page = await self.get(session, f"https://www.anime-gate.net/ajax/animes/suggest?search={self.query}", "text")
-                soup = BeautifulSoup(page, "html.parser")
-                divs = soup.find_all("div", {"class": "clearfix suggest"}) + soup.find_all("div", {
-                    "class": "clearfix suggest space-up"})
-                animes = list(map(self.parse, divs))
+                variables["search"] = self.query
+                async with session.post("https://graphql.anilist.co", json={"query":QUERY, "variables":variables}) as response:
+                    page = (await response.json())["data"]["Page"]
+                animes = list()
                 tasks = []
-                for anime in animes:
-                    task = asyncio.ensure_future(self.get(session, anime.urlImage, "img"))
-                    tasks.append(task)
-                imgArray = await asyncio.gather(*tasks)
-                [animes[x].setData(imgArray[x]) for x in range(len(imgArray))]
-                self.finished.emit(animes)
+                if page["pageInfo"]["total"] > 0:
+                    for media in page["media"]:
+                        anime = Anime(urlImage = media["coverImage"]["large"],
+                                      epNb = media["episodes"],
+                                      releasedDate = media["seasonYear"],
+                                      description = media["description"],
+                                      title = media["title"]["romaji"],
+                                      duration = media["duration"],
+                                      type_ = media["format"])
+                        animes.append(anime)
+                        task = asyncio.ensure_future(self.get(session, anime.urlImage, "img"))
+                        tasks.append(task)
+                    imgArray = await asyncio.gather(*tasks)
+                    [animes[x].setData(imgArray[x]) for x in range(len(imgArray))]
+                    self.finished.emit(animes)
+                else:
+                    self.finished.emit(list())
 
         if self.query:
             asyncio.run(main())
         else:
             self.finished.emit([])
 
+QUERY = """
+query ($id: Int, $page: Int, $perPage: Int, $search: String, $type: MediaType) {
+    Page (page: $page, perPage: $perPage) {
+        pageInfo
+        {
+            total
+        }
+        media (id: $id, search: $search, type: $type) {
+            id
+            title {
+                romaji
+            }
+            coverImage {
+                large
+                  }
+            episodes
+            seasonYear
+            description
+            format
+            duration
+        }
+    }
+}
+"""
 
+variables = {
+      "page": 1,
+      "type": "ANIME",
+      "perPage": 10,
+      "search": ""
+}
 
