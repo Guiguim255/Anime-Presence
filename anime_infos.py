@@ -1,4 +1,3 @@
-import json
 from urllib.request import urlopen, Request
 from PyQt5.QtCore import QThread, pyqtSignal
 from bs4 import BeautifulSoup

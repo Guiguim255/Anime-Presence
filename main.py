@@ -9,6 +9,7 @@ from pypresence import Presence
 import json
 import time
 import sys
+import os.path
 
 
 class UserInterface(QMainWindow, MainWindow):
@@ -23,8 +24,17 @@ class UserInterface(QMainWindow, MainWindow):
             self.translation = json.load(json_file)
 
         print("Loading configuration...")
-        with open("data/config.json", "r") as json_file:
-            self.config_json = json.load(json_file)
+        if os.path.isfile("data/config.json"):
+            with open("data/config.json", "r") as json_file:
+                self.config_json = json.load(json_file)
+        else:
+            print("Creating configuration...")
+            with open("data/default_config.json", "r") as json_file:
+                default_config = json_file.read()
+                with open("data/config.json", "w") as new_config:
+                    new_config.write(default_config)
+                self.config_json = json.loads(default_config)
+
         self.language = self.config_json["user_language"]
         self.theme = Theme.get_theme(self.config_json["theme"])
         self.l_format = self.translation[self.language]["format"]
