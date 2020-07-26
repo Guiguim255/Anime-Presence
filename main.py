@@ -3,24 +3,12 @@ from PyQt5.QtCore import pyqtSlot
 from data.ui.Theme import Theme
 from data.ui.Widgets import Fetcher
 from UI import MainWindow
+from anime_infos import AnimeInfos
+from SettingsQt import Settings_UserInterface
 from pypresence import Presence
 import json
 import time
-from anime_infos import AnimeInfos
-from SettingsQt import Settings_UserInterface
 import sys
-import unicodedata
-
-
-def normalize(string):
-    string_hash = sum([ord(char) for char in string])
-    string = list(unicodedata.normalize("NFKD", string).encode("ascii", "ignore").decode("ascii").lower())
-    for i in range(len(string)):
-        if string[i] in ["\\", "/", ":", "*", "<", ">", "|", " "]:
-            string[i] = "_"
-        elif string[i] == "?":
-            string[i] = ""
-    return f'{"".join(string)[:32-len(str(string_hash))]}{string_hash:x}'
 
 
 class UserInterface(QMainWindow, MainWindow):
@@ -122,12 +110,12 @@ class UserInterface(QMainWindow, MainWindow):
                 self.result_label.setText("Invalid url")"""
 
     def onLabelClick(self, anime):
-        self.url_entry.setText(anime.mainTitle)
-        self.urlLabel = anime.mainTitle
-        self.maxEpisode = int(anime.epNb)
+        self.url_entry.setText(anime.title)
+        self.urlLabel = anime.title
+        self.maxEpisode = int(anime.episodes)
         if self.maxEpisode > 1:
             self.spinbox.show()
-            self.spinbox.setMaximum(anime.epNb)
+            self.spinbox.setMaximum(anime.episodes)
         self.scrollView.hide()
         self.choice.show()
         self.confirm_button.show()
@@ -193,13 +181,13 @@ class UserInterface(QMainWindow, MainWindow):
 
     def get_presence(self, text, Type):
         if Type == "url":
-            thread = AnimeInfos(text, Type, parent = self)
+            thread = AnimeInfos(text, Type, parent=self)
             thread.infos.connect(self.update_presence)
             thread.start()
         else:
-            website = ["", "adn_logo", "crunchyroll_logo", "wakanim_logo", ""][self.choice.currentIndex()]
-            infos = {"ep_nb": str(self.episode), "s_nb": "0", "anime_name": self.currentAnime.mainTitle,
-                     "website": website, "image": normalize(self.currentAnime.mainTitle)}
+            website = ["", ["adn_logo", "Anime Digital Network"], ["crunchyroll_logo", "Crunchyroll"], ["wakanim_logo", "Wakanim"], ""][self.choice.currentIndex()]
+            infos = {"ep_nb": str(self.episode), "s_nb": "0", "anime_name": self.currentAnime.title, "website": website,
+                     "image": [str(self.currentAnime.id), f"{self.currentAnime.romaji} ({self.currentAnime.released_date}), {self.currentAnime.episodes} episodes"]}
             self.update_presence(infos)
 
     def update_presence(self, infos):
@@ -207,14 +195,15 @@ class UserInterface(QMainWindow, MainWindow):
                   "details": f"{self.translation[self.language]['watching']} {infos['anime_name']}",
                   "state": self.generate_state(self.l_format, infos)}
 
-        response = self.RPC.update(**{"large_image": infos["image"]})
+        response = self.RPC.update(**{"large_image": infos["image"][0]})
         if response["data"]["assets"].get("large_image"):
-            params["large_image"] = infos["image"]
+            params["large_image"], params["large_text"] = infos["image"]
             if infos["website"]:
-                params["small_image"] = infos["website"]
+                params["small_image"], params["small_text"] = infos["website"]
         else:
             if infos["website"]:
-                params["large_image"] = infos["website"]
+                params["large_image"] = infos["website"][0]
+                params["large_text"] = infos["image"][1]
 
         self.RPC.update(**params)
 

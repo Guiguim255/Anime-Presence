@@ -38,25 +38,16 @@ class AnimeInfos(QThread):
                     break
         if "animedigitalnetwork" in netloc:
             title = soup.find("meta", {"itemprop":"name"})["content"].split(" - ")[0]
-            website = "adn"
+            website = ["adn_logo", "Anime Digital Network"]
         if netloc == "www.wakanim.tv":
-            website = "wakanim"
+            website = ["wakanim_logo", "Wakanim"]
             mainUrl = soup.find("a", {"class":"button -thin -outline"})["href"]
             url2 = "://".join(parsedUrl[:2]) + mainUrl
             soup2 = BeautifulSoup(self.get(url2), "html.parser")
             title = soup2.find("meta", {"itemprop":"name"})["content"].rstrip()
         if netloc == "www.crunchyroll.com":
-            website = "crunchyroll"
+            website = ["crunchyroll_logo", "Crunchyroll"]
             title = soup.find("meta", {"property":"og:title"})["content"]
-        with open("data/database.json", "r") as f:
-            db = json.load(f)
 
-        try:
-            image = db[website][title]
-            small_image = website + "_logo"
-        except KeyError:
-            image = website + "_logo"
-            small_image = ""
-
-        self.infos.emit({"website":website, "anime_name":title, "ep_nb":nEpisode, "s_nb":nSaison, "image":image, "small_image":small_image})
+        self.infos.emit({"website": website, "anime_name": title, "ep_nb":nEpisode, "s_nb": nSaison, "image": ["EA", ""]})
 

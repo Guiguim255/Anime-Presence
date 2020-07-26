@@ -5,14 +5,17 @@ from itertools import zip_longest
 import asyncio
 import aiohttp
 
+
 class Anime:
 
-    def __init__(self, urlImage, title, type_, epNb, releasedDate, duration, description):
+    def __init__(self, anime_id, image_url, title, romaji, type_, episodes, released_date, duration, description):
+        self.id = anime_id
         self.title = title
-        self.urlImage = urlImage
+        self.romaji = romaji
+        self.image_url = image_url
         self.type = type_
-        self.epNb = epNb
-        self.releasedDate = releasedDate
+        self.episodes = episodes
+        self.released_date = released_date
         self.dataImage = None
         self.duration = duration
         self.description = description
@@ -31,7 +34,6 @@ class AnimeScrollView(QScrollArea):
         self.fontColor = ""
         self.mainBackgroundColor = ""
         self.altBackgroundColor = ""
-
 
         self.widget = QWidget()
         self.animeLabels = []
@@ -133,7 +135,7 @@ class AnimeLabel(QWidget):
         palette.setColor(QPalette.Background, QColor(theme.mainBackgroundColor))
         self.setPalette(palette)
         if len(self.anime.title) > 48:
-            self.setToolTip(f"<p style='white-space:pre'>{self.anime.title} ({self.anime.releasedDate})</p>")
+            self.setToolTip(f"<p style='white-space:pre'>{self.anime.title} ({self.anime.released_date})</p>")
 
     def mousePressEvent(self, event) -> None:
         self.labelClicked.emit(self.anime)
@@ -147,6 +149,7 @@ class AnimeLabel(QWidget):
         palette = QPalette()
         palette.setColor(QPalette.Background, QColor(self.theme.altBackgroundColor))
         self.setPalette(palette)
+
 
 class WebsiteComboBox(QComboBox):
     def __init__(self, translate, theme):
@@ -196,21 +199,24 @@ class Fetcher(QThread):
         async def main():
             async with aiohttp.ClientSession() as session:
                 variables["search"] = self.query
-                async with session.post("https://graphql.anilist.co", json={"query":QUERY, "variables":variables}) as response:
+                async with session.post("https://graphql.anilist.co",
+                                        json={"query": QUERY, "variables": variables}) as response:
                     page = (await response.json())["data"]["Page"]
                 animes = list()
                 tasks = []
                 if page["pageInfo"]["total"] > 0:
                     for media in page["media"]:
-                        anime = Anime(urlImage = media["coverImage"]["large"],
-                                      epNb = media["episodes"],
-                                      releasedDate = media["seasonYear"],
-                                      description = media["description"],
-                                      title = media["title"]["romaji"],
-                                      duration = media["duration"],
-                                      type_ = media["format"])
+                        anime = Anime(anime_id=media["id"],
+                                      image_url=media["coverImage"]["large"],
+                                      episodes=media["episodes"],
+                                      released_date=media["seasonYear"],
+                                      description=media["description"],
+                                      title=media["title"]["english"] or media["title"]["romaji"],
+                                      romaji=media["title"]["romaji"],
+                                      duration=media["duration"],
+                                      type_=media["format"])
                         animes.append(anime)
-                        task = asyncio.ensure_future(self.get(session, anime.urlImage, "img"))
+                        task = asyncio.ensure_future(self.get(session, anime.image_url, "img"))
                         tasks.append(task)
                     imgArray = await asyncio.gather(*tasks)
                     [animes[x].setData(imgArray[x]) for x in range(len(imgArray))]
@@ -223,6 +229,7 @@ class Fetcher(QThread):
         else:
             self.finished.emit([])
 
+
 QUERY = """
 query ($id: Int, $page: Int, $perPage: Int, $search: String, $type: MediaType) {
     Page (page: $page, perPage: $perPage) {
@@ -233,6 +240,8 @@ query ($id: Int, $page: Int, $perPage: Int, $search: String, $type: MediaType) {
         media (id: $id, search: $search, type: $type) {
             id
             title {
+                native
+                english
                 romaji
             }
             coverImage {
@@ -249,9 +258,8 @@ query ($id: Int, $page: Int, $perPage: Int, $search: String, $type: MediaType) {
 """
 
 variables = {
-      "page": 1,
-      "type": "ANIME",
-      "perPage": 10,
-      "search": ""
+    "page": 1,
+    "type": "ANIME",
+    "perPage": 10,
+    "search": ""
 }
-
