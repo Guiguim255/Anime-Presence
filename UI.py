@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from data.ui.Widgets import AnimeScrollView, WebsiteComboBox
+from data.ui.Widgets import AnimeScrollView, WebsiteComboBox, EpisodeComboBox
 
 class MainWindow():
 
@@ -51,9 +51,9 @@ class MainWindow():
         self.choice = WebsiteComboBox(json, theme)
         self.urlLayout.addWidget(self.choice)
         self.choice.hide()
-        self.spinbox = QtWidgets.QSpinBox()
-        self.urlLayout.addWidget(self.spinbox)
-        self.spinbox.hide()
+        self.episodeComboBox = EpisodeComboBox(json, theme)
+        self.urlLayout.addWidget(self.episodeComboBox)
+        self.episodeComboBox.hide()
 
         self.horizontalLayout_2.addLayout(self.urlLayout)
 
@@ -85,16 +85,22 @@ class MainWindow():
         self.verticalLayout.addWidget(self.result_label)
         spacerItem8 = QtWidgets.QSpacerItem(20, 24, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem8)
-        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_4 = QtWidgets.QGridLayout()
         spacerItem9 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_4.addItem(spacerItem9)
         self.settings_button = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setPointSize(11)
         self.settings_button.setFont(font)
-        self.settings_button.setLayoutDirection(QtCore.Qt.RightToLeft)
-        self.horizontalLayout_4.addWidget(self.settings_button)
+        self.horizontalLayout_4.addWidget(self.settings_button, 1, 1)
+
+        self.web_button = QtWidgets.QPushButton(self.centralwidget)
+        self.web_button.setFont(font)
+        self.web_button.hide()
+        self.web_button.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.MinimumExpanding)
+        self.horizontalLayout_4.addWidget(self.web_button, 1, 0)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
+
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.setText(json)
@@ -106,7 +112,8 @@ class MainWindow():
         self.confirm_button.setText(json["start"])
         self.settings_button.setText(json["settings"])
         self.url_entry.setPlaceholderText(json["enter url"])
-        self.spinbox.lineEdit().setPlaceholderText(json["episode"].capitalize())
+        self.episodeComboBox.setText(json)
+        self.web_button.setText("Add assets 🌐")
 
 
     def setTheme(self, theme):
@@ -137,11 +144,22 @@ class MainWindow():
                                            "    border-radius: 13px;\n"
                                            "    padding: 2 7px;\n"
                                            "    padding-right: 10px;\n"
-                                           # "    transition: 0.25s;\n"
                                            "}\n"
                                            "\n"
                                            "QPushButton:hover{\n"
                                            f"    background: {theme.altBackgroundColor};\n"
                                            f"    border: 2px solid {theme.altBackgroundColor};\n"
                                            "}")
-        self.spinbox.setStyleSheet(f"background-color: {theme.altBackgroundColor}; color: {theme.fontColor}; border-color: {theme.fontColor}")
+        self.web_button.setStyleSheet("    QPushButton{\n"
+                                           f"    background: {theme.mainBackgroundColor};\n"
+                                           f"    border: 2px solid {theme.mainBackgroundColor};\n"
+                                           "    border-radius: 13px;\n"
+                                           "    padding: 2 7px;\n"
+                                           "    padding-right: 10px;\n"
+                                           "}\n"
+                                           "\n"
+                                           "QPushButton:hover{\n"
+                                           f"    background: {theme.altBackgroundColor};\n"
+                                           f"    border: 2px solid {theme.altBackgroundColor};\n"
+                                           "}")
+        self.episodeComboBox.setTheme(theme)

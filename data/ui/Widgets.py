@@ -1,32 +1,15 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QScrollArea, QVBoxLayout, QSizePolicy, QComboBox
-from PyQt5.QtGui import QPixmap, QPalette, QColor
-from PyQt5.QtCore import Qt, pyqtSignal, QThread
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QScrollArea, QVBoxLayout, QSizePolicy, QComboBox, QMenu, \
+    QAction, QStyle, QApplication, QFileDialog, QGridLayout, QPushButton, QListView
+from .Theme import Theme
+from PyQt5.QtGui import QPixmap, QPalette, QColor, QMouseEvent, QImage, QPainter, QTransform, QIcon, QFont
+from PyQt5.QtCore import Qt, pyqtSignal, QPoint
+from .Network import Fetcher, Anime
 from itertools import zip_longest
-import asyncio
-import aiohttp
-
-
-class Anime:
-
-    def __init__(self, anime_id, image_url, title, romaji, type_, episodes, released_date, duration, description):
-        self.id = anime_id
-        self.title = title
-        self.romaji = romaji
-        self.image_url = image_url
-        self.type = type_
-        self.episodes = episodes
-        self.released_date = released_date
-        self.dataImage = None
-        self.duration = duration
-        self.description = description
-
-    def setData(self, data):
-        self.dataImage = data
-
+import os
+import urllib.parse
 
 class AnimeScrollView(QScrollArea):
     clicked = pyqtSignal(Anime)
-
     def __init__(self, theme):
         super(AnimeScrollView, self).__init__()
 
@@ -105,7 +88,7 @@ class AnimeLabel(QWidget):
         self.layout = QHBoxLayout()
 
         self.image = QPixmap()
-        self.image.loadFromData(self.anime.dataImage)
+        self.image.loadFromData(self.anime.largeDataImage)
         self.image = self.image.scaledToHeight(50, Qt.SmoothTransformation)
         self.imLabel = QLabel()
         self.imLabel.setPixmap(self.image)
@@ -135,10 +118,43 @@ class AnimeLabel(QWidget):
         palette.setColor(QPalette.Background, QColor(theme.mainBackgroundColor))
         self.setPalette(palette)
         if len(self.anime.title) > 48:
-            self.setToolTip(f"<p style='white-space:pre'>{self.anime.title} ({self.anime.released_date})</p>")
+            self.setToolTip(f"<p style='white-space:pre'>{self.anime.title} ({self.anime.seasonYear})</p>")
 
-    def mousePressEvent(self, event) -> None:
-        self.labelClicked.emit(self.anime)
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.LeftButton:
+            self.labelClicked.emit(self.anime)
+        elif event.button() == Qt.RightButton:
+            self.menu = QMenu()
+            save = QAction("Save the image")
+            save.setIcon(QApplication.style().standardIcon(QStyle.SP_ArrowDown))
+            self.menu.addAction(save)
+            action = self.menu.exec_(self.mapToGlobal(event.pos()))
+            if action == save:
+                if self.anime.extraLargeDataImage:
+                    return self.dialogSave(self.anime.extraLargeDataImage)
+                if self.anime.extraLargeImage:
+                    fetcher = Fetcher()
+                    fetcher.get_image(self.anime.extraLargeImage, self.dialogSave)
+                else:
+                    return self.dialogSave(self.anime.largeDataImage)
+
+    def dialogSave(self, data):
+        if not data:
+            data = self.anime.largeImage
+        image = QImage.fromData(data).scaledToHeight(512, Qt.SmoothTransformation)
+        nImage = QImage(512, 512, QImage.Format_ARGB32)
+        margin = (512 - image.width()) / 2
+        start = QPoint(margin, 0)
+        painter = QPainter(nImage)
+        painter.setRenderHints(QPainter.HighQualityAntialiasing | QPainter.SmoothPixmapTransform, True)
+        painter.drawImage(start, image)
+        painter.end()
+        filename = QFileDialog.getSaveFileName(self, "Save the image",
+                                               os.path.join(os.getcwd(), f"{self.anime.id}.png"))
+        print(filename)
+        if filename:
+            nImage.save(filename[0])
+
 
     def leaveEvent(self, event):
         palette = QPalette()
@@ -182,84 +198,99 @@ class WebsiteComboBox(QComboBox):
         self.model().item(0).setEnabled(False)
 
 
-class Fetcher(QThread):
-    finished = pyqtSignal(list)
+class EpisodeComboBox(QWidget):
+    def __init__(self, translate, theme):
+        super(EpisodeComboBox, self).__init__()
+        self.layout = QGridLayout()
 
-    def __init__(self, query):
-        super(Fetcher, self).__init__()
-        self.query = query
+        self.combo = QComboBox()
+        self.layout.addWidget(self.combo, 0, 1)
+        self.combo.currentIndexChanged.connect(self.onSelect)
 
-    async def get(self, session, url, contentType):
-        async with session.get(url) as response:
-            if contentType == "text":
-                return await response.text()
-            return await response.content.read()
+        self.previous = QPushButton()
+        self.previous.clicked.connect(lambda event: self.move(-1))
+        self.previous.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.layout.addWidget(self.previous, 0, 0)
 
-    def run(self):
-        async def main():
-            async with aiohttp.ClientSession() as session:
-                variables["search"] = self.query
-                async with session.post("https://graphql.anilist.co",
-                                        json={"query": QUERY, "variables": variables}) as response:
-                    page = (await response.json())["data"]["Page"]
-                animes = list()
-                tasks = []
-                if page["pageInfo"]["total"] > 0:
-                    for media in page["media"]:
-                        anime = Anime(anime_id=media["id"],
-                                      image_url=media["coverImage"]["large"],
-                                      episodes=media["episodes"],
-                                      released_date=media["seasonYear"],
-                                      description=media["description"],
-                                      title=media["title"]["english"] or media["title"]["romaji"],
-                                      romaji=media["title"]["romaji"],
-                                      duration=media["duration"],
-                                      type_=media["format"])
-                        animes.append(anime)
-                        task = asyncio.ensure_future(self.get(session, anime.image_url, "img"))
-                        tasks.append(task)
-                    imgArray = await asyncio.gather(*tasks)
-                    [animes[x].setData(imgArray[x]) for x in range(len(imgArray))]
-                    self.finished.emit(animes)
-                else:
-                    self.finished.emit(list())
+        self.next = QPushButton()
+        self.next.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.next.clicked.connect(lambda event: self.move(1))
+        self.layout.addWidget(self.next, 0, 2)
 
-        if self.query:
-            asyncio.run(main())
-        else:
-            self.finished.emit([])
+        self.setLayout(self.layout)
 
+        self.max, self.counter = 0, 1
+        self.setText(translate)
+        self.setTheme(theme)
 
-QUERY = """
-query ($id: Int, $page: Int, $perPage: Int, $search: String, $type: MediaType) {
-    Page (page: $page, perPage: $perPage) {
-        pageInfo
-        {
-            total
-        }
-        media (id: $id, search: $search, type: $type) {
-            id
-            title {
-                native
-                english
-                romaji
-            }
-            coverImage {
-                large
-                  }
-            episodes
-            seasonYear
-            description
-            format
-            duration
-        }
-    }
-}
-"""
+    def setText(self, translate):
+        self.translate = translate
+        for i in range(self.max):
+            self.combo.setItemText(i, f"{self.translate['episode'].capitalize()} {i}")
 
-variables = {
-    "page": 1,
-    "type": "ANIME",
-    "perPage": 10,
-    "search": ""
-}
+    def setTheme(self, theme):
+        self.theme = theme
+        image = QPixmap(fr"data\ressources\expand{'' if theme.name == 'light' else 'white'}.png")
+        self.next.setIcon(QIcon(image.transformed(QTransform().scale(1, -1))))
+        self.previous.setIcon(QIcon(image))
+        for button in {self.next, self.previous}:
+            button.setStyleSheet("    QPushButton{\n"
+                                           f"    background: {theme.altBackgroundColor};\n"
+                                           f"    border: {theme.mainBackgroundColor};\n"
+                                           "    border-radius: 10px;\n"
+                                           "    padding: 2 7px;\n"
+                                           "}\n"
+                                           "\n"
+                                           "QPushButton:hover{\n"
+                                           f"    background: {theme.altBackgroundColor};\n"
+                                           f"    border: {theme.mainBackgroundColor};\n"
+                                           "}")
+        self.combo.setStyleSheet(
+            f"QComboBox {{color: {self.theme.fontColor};background: {self.theme.altBackgroundColor};padding: 5px 5px 5px 5px; border: 1px solid {self.theme.mainBackgroundColor};border-radius: "
+            "3px;}QComboBox::drop-down{width: 30px;border-left-width: 1px;border-left-color: "
+            f"{theme.mainBackgroundColor};border-left-style: {self.theme.fontColor} solid;}}QComboBox::down-arrow{{image: url("
+            f"data/ressources/expand{'white' if self.theme.name == 'dark' else ''}.png);width: 16px;height: 16px;}}"
+            f"QAbstractItemView {{border: 1px solid {theme.fontColor}; color: {self.theme.fontColor}; background-color: "
+            f"{self.theme.altBackgroundColor};selection-background-color: #FF0000; outline: 0px;}}"
+        )
+        view = QListView(self.combo)
+        font = QFont()
+        font.setPointSize(13)
+        font.setFamily("Rubik")
+        view.setStyleSheet(f""" 
+                                         QListView::item:selected, QListView::item:hover {{                 
+                                         color: {self.theme.fontColor};
+                                         background-color: {self.theme.mainBackgroundColor}}}
+                                        """)
+        view.setFont(font)
+        self.combo.setView(view)
+        self.combo.setFont(font)
+
+    def move(self, direction):
+        self.counter += direction
+        if self.counter > self.max:
+            self.counter = 1
+        elif self.counter < 1:
+            self.counter = self.max
+        self.combo.setCurrentIndex(self.counter - 1)
+
+    def onSelect(self, index):
+        self.counter = index + 1
+
+    def init(self, max):
+        self.counter = 1
+        if max > self.max:
+            for i in range(self.max + 1, max + 1):
+                self.combo.addItem(f"{self.translate['episode'].capitalize()} {i}")
+        elif max < self.max:
+            for i in range(self.max - 1, max - 1, -1):
+                self.combo.removeItem(i)
+        self.max = max
+
+if __name__ == "__main__":
+    application = QApplication([])
+    widget = EpisodeComboBox({"episodes":"Episode"}, Theme.get_theme("dark"))
+    widget.init(10)
+    widget.show()
+    application.exec_()
+

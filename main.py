@@ -1,15 +1,15 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtCore import pyqtSlot
 from data.ui.Theme import Theme
-from data.ui.Widgets import Fetcher
+from data.ui.Network import Fetcher
 from UI import MainWindow
-from anime_infos import AnimeInfos
-from SettingsQt import Settings_UserInterface
 from pypresence import Presence
 import json
 import time
+from SettingsQt import Settings_UserInterface, ORIGINAL_APP_ID
 import sys
 import os.path
+import webbrowser
 
 
 class UserInterface(QMainWindow, MainWindow):
@@ -64,14 +64,14 @@ class UserInterface(QMainWindow, MainWindow):
         self.confirm_button.clicked.connect(self.on_confirm_button_clicked)
         self.scrollView.clicked.connect(self.onLabelClick)
         self.urlLayout.addWidget(self.scrollView)
+        self.web_button.clicked.connect(lambda event: webbrowser.open(f"https://discord.com/developers/applications/{self.config_json['App_ID']}/rich-presence/assets"))
+        if self.config_json['App_ID'] != ORIGINAL_APP_ID:
+            self.web_button.show()
         self.url_entry.focusOutEvent = lambda event: self.handleFocus("exit")
         self.url_entry.focusInEvent = lambda event: self.handleFocus("enter")
         self.url_entry.textEdited.connect(self.onEdit)
         self.scrollView.hide()
         self.fetcher = None
-        self.spinbox.textFromValue = lambda x: f"{self.translation[self.language]['episode'].title()} {x}"
-        self.spinbox.setMinimum(1)
-        self.spinbox.valueChanged.connect(self.update_episode)
 
     @pyqtSlot(str)
     def setAllTexts(self, language):
@@ -94,9 +94,6 @@ class UserInterface(QMainWindow, MainWindow):
             self.settingsWindow.setTheme(self.theme)
             self.scrollView.setTheme(self.theme)
             self.choice.setTheme(self.theme)
-
-    def update_episode(self):
-        self.episode = self.spinbox.value()
 
     def on_confirm_button_clicked(self):
         text = self.url_entry.text()
@@ -122,19 +119,19 @@ class UserInterface(QMainWindow, MainWindow):
     def onLabelClick(self, anime):
         self.url_entry.setText(anime.title)
         self.urlLabel = anime.title
-        self.maxEpisode = int(anime.episodes)
-        if self.maxEpisode > 1:
-            self.spinbox.show()
-            self.spinbox.setMaximum(anime.episodes)
+        self.currentAnime = anime
+        if anime.episodes > 1:
+            self.episodeComboBox.show()
+            self.episodeComboBox.init(anime.episodes)
+            print("initialized")
         self.scrollView.hide()
         self.choice.show()
         self.confirm_button.show()
-        self.currentAnime = anime
 
     def handleFocus(self, event):
         if event == "enter":
             self.choice.hide()
-            self.spinbox.hide()
+            self.episodeComboBox.hide()
             if self.scrollView.animeLabels:
                 self.scrollView.show()
                 self.confirm_button.hide()
@@ -145,25 +142,26 @@ class UserInterface(QMainWindow, MainWindow):
             if not (self.url_entry.text().startswith("http") or self.url_entry.text().startswith(
                     "www")) and not self.scrollView.isVisible() and self.url_entry.text():
                 self.choice.show()
-                self.spinbox.show()
+                self.episodeComboBox.show()
 
-    def onEdit(self, query):
+    def onEdit(self, query, episode = 0):
         self.choice.hide()
-        self.spinbox.hide()
+        self.episodeComboBox.hide()
         if not (query.startswith("http") or query.startswith("www")):
             if not self.isRunning:
-                self.isRunning = True
-                self.fetcher = Fetcher(query)
+                self.isRunning = False
+                self.fetcher = Fetcher()
                 self.fetcher.finished.connect(self.f)
                 self.fetcher.finished.connect(self.scrollView.fill)
-                self.fetcher.start()
-            else:
+                self.fetcher.run(query, 10)
+            """else:
                 self.fetcher.terminate()
                 self.isRunning = False
-                return self.onEdit(query)
+                return self.onEdit(query)"""
         else:
-            self.confirm_button.show()
-            self.scrollView.hide()
+            self.fetcher = Fetcher()
+            self.fetcher.parse_url(query, self.onEdit)
+
 
     def f(self, x):
         self.isRunning = False
@@ -196,8 +194,8 @@ class UserInterface(QMainWindow, MainWindow):
             thread.start()
         else:
             website = ["", ["adn_logo", "Anime Digital Network"], ["crunchyroll_logo", "Crunchyroll"], ["wakanim_logo", "Wakanim"], ""][self.choice.currentIndex()]
-            infos = {"ep_nb": str(self.episode), "s_nb": "0", "anime_name": self.currentAnime.title, "website": website,
-                     "image": [str(self.currentAnime.id), f"{self.currentAnime.romaji} ({self.currentAnime.released_date}), {self.currentAnime.episodes} episodes"]}
+            infos = {"ep_nb": str(self.episodeComboBox.counter), "s_nb": "0", "anime_name": self.currentAnime.title, "website": website,
+                     "image": [str(self.currentAnime.id), f"{self.currentAnime.romajiTitle} ({self.currentAnime.seasonYear}), {self.currentAnime.episodes} episodes"]}
             self.update_presence(infos)
 
     def update_presence(self, infos):
