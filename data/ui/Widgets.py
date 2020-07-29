@@ -4,13 +4,14 @@ from .Theme import Theme
 from PyQt5.QtGui import QPixmap, QPalette, QColor, QMouseEvent, QImage, QPainter, QTransform, QIcon, QFont
 from PyQt5.QtCore import Qt, pyqtSignal, QPoint
 from .Network import Fetcher, Anime
-from itertools import zip_longest
 import os
-import urllib.parse
+
 
 class AnimeScrollView(QScrollArea):
+
     clicked = pyqtSignal(Anime)
-    def __init__(self, theme):
+
+    def __init__(self, theme, json):
         super(AnimeScrollView, self).__init__()
 
         self.setObjectName("AnimeScrollView")
@@ -20,16 +21,16 @@ class AnimeScrollView(QScrollArea):
 
         self.widget = QWidget()
         self.animeLabels = []
-        self.layout = QVBoxLayout(self.widget)
+        self.layout = QGridLayout(self.widget)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidget(self.widget)
         self.setWidgetResizable(True)
-        self.setGeometry(0, 0, 400, 142)
-        self.setFixedHeight(142)
-        self.verticalScrollBar().setSingleStep(142)
+        self.setGeometry(0, 0, 400, 138)
+        self.setFixedHeight(138)
+        self.verticalScrollBar().setSingleStep(138)
         self.hide()
 
         self.theme = theme
@@ -45,29 +46,21 @@ class AnimeScrollView(QScrollArea):
         for animeLabel in self.animeLabels:
             animeLabel.setTheme(theme)
 
+
     def fill(self, animes):
         for i in reversed(range(self.layout.count())):
-            layoutToRemove = self.layout.itemAt(i).layout()
-            for t in reversed(range(layoutToRemove.count())):
-                widgetToRemove = layoutToRemove.itemAt(t).widget()
-                layoutToRemove.removeWidget(widgetToRemove)
-                widgetToRemove.setParent(None)
-            self.layout.removeItem(layoutToRemove)
-            layoutToRemove.setParent(None)
+            widgetToRemove = self.layout.itemAt(i).widget()
+            self.layout.removeWidget(widgetToRemove)
+            widgetToRemove.setParent(None)
         self.animeLabels.clear()
-        for pair in zip_longest(animes[::2], animes[1::2]):
-            layout = QHBoxLayout(self.widget)
-            self.animeLabels.append(AnimeLabel(pair[0], self.theme))
+        for index, anime in enumerate(animes):
+            columnSpan = 1
+            if index == len(animes) - 1 and len(animes) % 2 != 0:
+                columnSpan = 2
+            self.animeLabels.append(AnimeLabel(anime, self.theme))
             self.animeLabels[-1].labelClicked.connect(self.onClick)
-            layout.addWidget(self.animeLabels[-1])
-            if pair[1] is not None:
-                self.animeLabels.append(AnimeLabel(pair[1], self.theme))
-                layout.addWidget(self.animeLabels[-1])
-                self.animeLabels[-1].labelClicked.connect(self.onClick)
-            self.layout.addLayout(layout)
+            self.layout.addWidget(self.animeLabels[-1], index // 2, index % 2, 1, columnSpan)
         self.show()
-        if not animes:
-            self.hide()
 
     def onClick(self, anime):
         self.clicked.emit(anime)
@@ -80,7 +73,6 @@ class AnimeLabel(QWidget):
         super(AnimeLabel, self).__init__()
 
         self.setAutoFillBackground(True)
-        self.setFixedHeight(71)
 
         self.anime = anime
         self.theme = theme

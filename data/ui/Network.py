@@ -123,7 +123,6 @@ class Fetcher(QObject):
     def terminate(self):
         self.terminated = True
         self.manager.deleteLater()
-        del self.manager
 
     def parse_url(self, arg:QNetworkReply, callback, step = 1):
         title, episode = "", 0
