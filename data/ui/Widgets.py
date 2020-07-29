@@ -11,7 +11,7 @@ class AnimeScrollView(QScrollArea):
 
     clicked = pyqtSignal(Anime)
 
-    def __init__(self, theme, json):
+    def __init__(self, theme):
         super(AnimeScrollView, self).__init__()
 
         self.setObjectName("AnimeScrollView")
