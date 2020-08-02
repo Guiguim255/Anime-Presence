@@ -24,9 +24,14 @@
     "personal app id": "ID de l'app personnelle",
     "start": "Démarrer",
     "stop": "Arrêter",
-    "previous": "Précédent",
-    "next": "Suivant",
-    "error": "ID de l'application invalide"
+    "error": "ID de l'application invalide",
+    "assets": "Ajouter des images 🌐",
+
+    "NETWORK_ERROR": "Erreur réseau",
+    "PAGE_NOT_FOUND_ERROR": "Page introuvable",
+    "NO_RESULTS_FOUND_ERROR": "Aucun résultats trouvés",
+    "INVALID_URL_ERROR": "URL invalide",
+    "PARSING_ERROR": "Impossible d'analyser la page, entrez plutôt le nom de l'anime"
   },
 
   "en": {
@@ -54,9 +59,14 @@
     "personal app id": "Personal app ID",
     "start": "Start",
     "stop": "Stop",
-    "previous": "Previous",
-    "next": "Next",
-    "error": "Invalid app ID"
+    "assets": "Add assets 🌐",
+    "error": "Invalid app ID",
+
+    "NETWORK_ERROR": "Network error",
+    "PAGE_NOT_FOUND_ERROR": "Page not found",
+    "NO_RESULTS_FOUND_ERROR": "No search results",
+    "INVALID_URL_ERROR": "Invalid URL",
+    "PARSING_ERROR": "Cannot parse the page, enter the anime's name instead"
   },
 
   "ndl": {

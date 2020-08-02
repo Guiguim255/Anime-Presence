@@ -11,7 +11,7 @@ class AnimeScrollView(QScrollArea):
 
     clicked = pyqtSignal(Anime)
 
-    def __init__(self, theme):
+    def __init__(self, theme, json):
         super(AnimeScrollView, self).__init__()
 
         self.setObjectName("AnimeScrollView")
@@ -33,7 +33,13 @@ class AnimeScrollView(QScrollArea):
         self.verticalScrollBar().setSingleStep(138)
         self.hide()
 
+        self.errorLabel = QLabel(self.widget)
+        self.errorLabel.setAlignment(Qt.AlignCenter)
+        self.errorLabel.hide()
+        self.error = None
+
         self.theme = theme
+        self.json = json
         self.setTheme(theme)
 
     def setTheme(self, theme):
@@ -43,9 +49,15 @@ class AnimeScrollView(QScrollArea):
         palette.setColor(QPalette.Background, QColor(theme.mainBackgroundColor))
         self.setAutoFillBackground(True)
         self.setPalette(palette)
+        self.errorLabel.setStyleSheet(
+            f"QLabel{{color: {self.theme.fontColor}; background-color: {self.theme.altBackgroundColor}; font: 13pt \"Rubik\";}}")
         for animeLabel in self.animeLabels:
             animeLabel.setTheme(theme)
 
+    def setText(self, json):
+        self.json = json
+        if self.errorLabel:
+            self.errorLabel.setText(json.get(self.error.name))
 
     def fill(self, animes):
         for i in reversed(range(self.layout.count())):
@@ -61,6 +73,15 @@ class AnimeScrollView(QScrollArea):
             self.animeLabels[-1].labelClicked.connect(self.onClick)
             self.layout.addWidget(self.animeLabels[-1], index // 2, index % 2, 1, columnSpan)
         self.show()
+
+    def onError(self, error):
+        self.fill(list())
+        self.error = error
+        self.errorLabel.setText(self.json.get(self.error.name, "Unknown error"))
+        self.errorLabel.show()
+        self.layout.addWidget(self.errorLabel)
+        self.show()
+
 
     def onClick(self, anime):
         self.clicked.emit(anime)
@@ -143,7 +164,6 @@ class AnimeLabel(QWidget):
         painter.end()
         filename = QFileDialog.getSaveFileName(self, "Save the image",
                                                os.path.join(os.getcwd(), f"{self.anime.id}.png"))
-        print(filename)
         if filename:
             nImage.save(filename[0])
 
@@ -162,33 +182,44 @@ class AnimeLabel(QWidget):
 class WebsiteComboBox(QComboBox):
     def __init__(self, translate, theme):
         super(WebsiteComboBox, self).__init__()
-        self.insertItem(0, " ")
-        self.insertItem(1, "Anime Digital Network")
-        self.insertItem(2, "Crunchyroll")
-        self.insertItem(3, "Wakanim")
-        self.insertItem(4, translate["other"])
+        self.insertItem(0, "Anime Digital Network")
+        self.insertItem(1, "Crunchyroll")
+        self.insertItem(2, "Wakanim")
+        self.insertItem(3, translate["other"])
+        self.setEditable(True)
+        self.lineEdit().setReadOnly(True)
         self.json = translate
         self.theme = theme
         self.setTheme(self.theme)
         self.setText(self.json)
+        self.setCurrentIndex(4)
 
     def setTheme(self, theme):
         self.theme = theme
         self.setStyleSheet(
-            f"QComboBox {{background: {theme.mainBackgroundColor};border: 1px solid {theme.mainBackgroundColor};border-radius: "
+            f"QComboBox {{color: {self.theme.fontColor};background: {self.theme.altBackgroundColor};padding: 5px 5px 5px 5px; border: 1px solid {self.theme.mainBackgroundColor};border-radius: "
             "3px;}QComboBox::drop-down{width: 30px;border-left-width: 1px;border-left-color: "
-            f"{theme.mainBackgroundColor};border-left-style: solid;}}QComboBox::down-arrow{{image: url("
-            f"data/ressources/expand{'white' if theme.name == 'dark' else ''}.png);width: 16px;height: 16px;}}"
-            f"QComboBox QAbstractItemView {{border: 2px solid {theme.mainBackgroundColor}; color: {theme.fontColor}; background-color: "
-            f"{theme.mainBackgroundColor};selection-background-color: {theme.altBackgroundColor}; selection-border: 2px solid {theme.fontColor};outline: "
-            "0px;}")
+            f"{theme.mainBackgroundColor};border-left-style: {self.theme.fontColor} solid;}}QComboBox::down-arrow{{image: url("
+            f"data/ressources/expand{'white' if self.theme.name == 'dark' else ''}.png);width: 16px;height: 16px;}}"
+            f"QAbstractItemView {{border: 1px solid {theme.fontColor}; color: {self.theme.fontColor}; background-color: "
+            f"{self.theme.altBackgroundColor};selection-background-color: #FF0000; outline: 0px;}}"
+        )
+        view = QListView(self)
+        font = QFont()
+        font.setPointSize(13)
+        font.setFamily("Rubik")
+        view.setStyleSheet(f""" 
+                                                 QListView::item:selected, QListView::item:hover {{                 
+                                                 color: {self.theme.fontColor};
+                                                 background-color: {self.theme.mainBackgroundColor}}}
+                                                """)
+        view.setFont(font)
+        self.setView(view)
+        self.setFont(font)
 
     def setText(self, json):
         self.json = json
-        self.removeItem(0)
-        self.insertItem(0, self.json["select website"])
-        self.model().item(0).setEnabled(False)
-
+        self.lineEdit().setPlaceholderText(json["select website"])
 
 class EpisodeComboBox(QWidget):
     def __init__(self, translate, theme):
@@ -196,18 +227,18 @@ class EpisodeComboBox(QWidget):
         self.layout = QGridLayout()
 
         self.combo = QComboBox()
-        self.layout.addWidget(self.combo, 0, 1)
+        self.layout.addWidget(self.combo, 0, 0, 2, 1)
         self.combo.currentIndexChanged.connect(self.onSelect)
 
         self.previous = QPushButton()
         self.previous.clicked.connect(lambda event: self.move(-1))
         self.previous.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.layout.addWidget(self.previous, 0, 0)
+        self.layout.addWidget(self.previous, 1, 1)
 
         self.next = QPushButton()
         self.next.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.next.clicked.connect(lambda event: self.move(1))
-        self.layout.addWidget(self.next, 0, 2)
+        self.layout.addWidget(self.next, 0, 1)
 
         self.setLayout(self.layout)
 
@@ -281,7 +312,7 @@ class EpisodeComboBox(QWidget):
 
 if __name__ == "__main__":
     application = QApplication([])
-    widget = EpisodeComboBox({"episodes":"Episode"}, Theme.get_theme("dark"))
+    widget = EpisodeComboBox({"episode":"Episode"}, Theme.get_theme("dark"))
     widget.init(10)
     widget.show()
     application.exec_()

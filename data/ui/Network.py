@@ -4,6 +4,7 @@ import json
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import re
+from enum import Enum
 
 QUERY = """
 query ($id: Int, $page: Int, $perPage: Int, $search: String, $type: MediaType) {
@@ -59,9 +60,18 @@ class Anime:
         self.format = format
         self.duration = duration
 
+class ErrorCodes(Enum):
+    NO_RESULTS_FOUND_ERROR = 0
+    NETWORK_ERROR = 1
+    PAGE_NOT_FOUND_ERROR = 2
+    PARSING_ERROR = 4
+    INVALID_URL_ERROR = 5
+
 
 class Fetcher(QObject):
     finished = pyqtSignal(list)
+    error = pyqtSignal(ErrorCodes)
+    urlParsed = pyqtSignal(str, int, str)
 
     def __init__(self):
         super(Fetcher, self).__init__()
@@ -86,7 +96,8 @@ class Fetcher(QObject):
             self.manager.finished.connect(self.handleData)
             response = json.loads(str(reply.readAll(), "utf-8"))
             self.length = 10 if response["data"]["Page"]["pageInfo"]["total"] >= 10 else response["data"]["Page"]["pageInfo"]["total"]
-            print(len(response["data"]["Page"]["media"]))
+            if self.length == 0:
+                self.error.emit(ErrorCodes.NO_RESULTS_FOUND_ERROR)
             for index, media in enumerate(response["data"]["Page"]["media"]):
                 if self.terminated:
                     return
@@ -95,8 +106,9 @@ class Fetcher(QObject):
                 request = QNetworkRequest(QUrl(anime.largeImage))
                 request.setAttribute(QNetworkRequest.HttpPipeliningAllowedAttribute, True)
                 self.manager.get(request)
-        else:
-            pass
+        if reply.error() == QNetworkReply.UnknownNetworkError:
+            self.error.emit(ErrorCodes.NETWORK_ERROR)
+            self.terminate()
 
     def get_image(self, link, callback):
         request = QNetworkRequest(QUrl(link))
@@ -104,10 +116,12 @@ class Fetcher(QObject):
         self.manager.get(request)
 
     def handle_image(self, reply, callback):
-        data = bytes()
         if reply.error() == QNetworkReply.NoError:
             data = reply.readAll()
-        callback(data)
+            callback(data)
+        if reply.error() == QNetworkReply.UnknownNetworkError:
+            self.error.emit(ErrorCodes.NETWORK_ERROR)
+            self.terminate()
 
     def handleData(self, reply:QNetworkReply):
         if reply.error() == QNetworkReply.NoError:
@@ -117,46 +131,65 @@ class Fetcher(QObject):
             if self.count == self.length:
                 self.finished.emit(list(self.animes.values()))
                 self.terminate()
-        else:
-            print("error")
+        elif reply.error() == QNetworkReply.UnknownNetworkError:
+            self.error.emit(ErrorCodes.NETWORK_ERROR)
+            self.terminate()
 
     def terminate(self):
         self.terminated = True
         self.manager.deleteLater()
 
-    def parse_url(self, arg:QNetworkReply, callback, step = 1):
+    def parse_url(self, arg:QNetworkReply, step = 1):
         title, episode = "", 0
         if step == 1:
             parsed = urlparse(arg)
             path = parsed.path
             if parsed.netloc == "www.crunchyroll.com":
-                title = path.split("/")[-2].replace("-", " ")
-                match = re.match(r".*episode-([0-9]*)", path)
-                if match:
-                    episode = int(match.group(1))
-                callback(title, episode)
+                try:
+                    title = path.split("/")[-2].replace("-", " ")
+                    match = re.match(r".*episode-([0-9]*)", path)
+                    if match:
+                        episode = int(match.group(1))
+                    self.urlParsed.emit(title, episode, parsed.netloc)
+                except (IndexError):
+                    self.error.emit(ErrorCodes.PARSING_ERROR)
             elif parsed.netloc in ("animedigitalnetwork.fr", "www.wakanim.tv"):
+                self.url = arg
                 request = QNetworkRequest(QUrl(arg))
+                request.setAttribute(QNetworkRequest.FollowRedirectsAttribute, True)
                 request.setHeader(QNetworkRequest.UserAgentHeader, b"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.119 Safari/537.36")
-                self.manager.finished.connect(lambda reply: self.parse_url(reply, callback, 2))
+                self.manager.finished.connect(lambda reply: self.parse_url(reply, 2))
                 self.manager.get(request)
+            else:
+                self.error.emit(ErrorCodes.INVALID_URL)
         elif step == 2:
             if arg.error() == QNetworkReply.NoError:
+                if arg.url().url() == "https://www.wakanim.tv/fr/v2/catalogue" and arg.url().url() != self.url:
+                    self.error.emit(ErrorCodes.PAGE_NOT_FOUND_ERROR)
+                    return
                 text = str(arg.readAll(), "utf-8")
                 soup = BeautifulSoup(text, "html.parser")
                 parsed = urlparse(arg.url().url())
-                if parsed.netloc == "animedigitalnetwork.fr":
-                    infos = str(soup.title).lstrip("<title>").rstrip("</title>").split(" - ")
-                    title = infos[0]
-                    if "- LE FILM - " in title:
-                        title = "".join(title.split("- LE FILM -"))
-                    match = re.match(r".*Épisode ([0-9]*)", infos[-4])
-                    if match:
-                        episode = int(match.group(1))
-                elif parsed.netloc == "www.wakanim.tv":
-                    title = soup.find("span", {"class": "episode_title"}).text
-                    span = soup.find("span", {"class": "episode_subtitle"}).text
-                    match = re.match(r".*ÉPISODE ([0-9]*)", span, flags = re.DOTALL)
-                    if match:
-                        episode = match.group(1)
-            callback(title, episode)
+                try:
+                    if parsed.netloc == "animedigitalnetwork.fr":
+                        infos = soup.title.text.split(" - ")
+                        title = infos[0]
+                        if "- LE FILM - " in title:
+                            title = "".join(title.split("- LE FILM -"))
+                        match = re.match(r".*Épisode ([0-9]*)", infos[-4])
+                        if match:
+                            episode = int(match.group(1))
+                        self.urlParsed.emit(title, episode, parsed.netloc)
+                    elif parsed.netloc == "www.wakanim.tv":
+                        title = soup.find("span", {"class": "episode_title"}).text
+                        span = soup.find("span", {"class": "episode_subtitle"}).text
+                        match = re.match(r".*ÉPISODE ([0-9]*)", span, flags = re.DOTALL)
+                        if match:
+                            episode = int(match.group(1))
+                        self.urlParsed.emit(title, episode, parsed.netloc)
+                except (IndexError, AttributeError):
+                    self.error.emit(ErrorCodes.PARSING_ERROR)
+            elif arg.error() == QNetworkReply.UnknownNetworkError:
+                self.error.emit(ErrorCodes.NETWORK_ERROR)
+            elif arg.error() == QNetworkReply.ContentNotFoundError:
+                self.error.emit(ErrorCodes.PAGE_NOT_FOUND_ERROR)

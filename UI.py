@@ -46,7 +46,7 @@ class MainWindow():
         self.url_entry = QtWidgets.QLineEdit(self.centralwidget)
         self.urlLayout.addWidget(self.url_entry)
         self.url_entry.setMinimumSize(QtCore.QSize(400, 30))
-        self.scrollView = AnimeScrollView(theme)
+        self.scrollView = AnimeScrollView(theme, json)
         self.MainWindow.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.choice = WebsiteComboBox(json, theme)
         self.urlLayout.addWidget(self.choice)
@@ -113,7 +113,7 @@ class MainWindow():
         self.settings_button.setText(json["settings"])
         self.url_entry.setPlaceholderText(json["enter url"])
         self.episodeComboBox.setText(json)
-        self.web_button.setText("Add assets 🌐")
+        self.web_button.setText(json.get("assets"))
 
 
     def setTheme(self, theme):

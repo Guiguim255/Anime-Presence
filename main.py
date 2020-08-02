@@ -56,8 +56,6 @@ class UserInterface(QMainWindow, MainWindow):
         self.RPC.connect()
         print("Ready")
 
-        self.isRunning = False
-        self.infos = {}
         self.episode = 0
         self.currentAnime = None
 
@@ -80,7 +78,6 @@ class UserInterface(QMainWindow, MainWindow):
             if self.translation[l]["name"] == language:
                 lang = l
         if lang != self.language:
-            print("Changing")
             self.language = lang
             self.setText(self.translation[self.language])
             self.settingsWindow.setText(self.translation[self.language])
@@ -101,20 +98,12 @@ class UserInterface(QMainWindow, MainWindow):
         if buttonText == self.translation[self.language]["start"]:
             if text:
                 self.confirm_button.setText(self.translation[self.language]["stop"])
-                if text.startswith("http") or text.startswith("www"):
-                    self.get_presence(text, "url")
-                    self.result_label.setStyleSheet("QLabel{color: #26bc1a;}")
-                else:
-                    self.get_presence(text, "name")
+                self.get_presence(text)
                 self.result_label.setText(self.translation[self.language]["updated presence"])
         else:
             self.result_label.clear()
             self.RPC.clear()
             self.confirm_button.setText(self.translation[self.language]["start"])
-
-            """else:
-                self.result_label.setStyleSheet("QLabel{color: #bc1a26;}")
-                self.result_label.setText("Invalid url")"""
 
     def onLabelClick(self, anime):
         self.url_entry.setText(anime.title)
@@ -123,7 +112,9 @@ class UserInterface(QMainWindow, MainWindow):
         if anime.episodes > 1:
             self.episodeComboBox.show()
             self.episodeComboBox.init(anime.episodes)
-            print("initialized")
+            if self.episode and self.episode <= anime.episodes:
+                self.episodeComboBox.combo.setCurrentIndex(self.episode - 1)
+        self.episode = 0
         self.scrollView.hide()
         self.choice.show()
         self.confirm_button.show()
@@ -144,27 +135,31 @@ class UserInterface(QMainWindow, MainWindow):
                 self.choice.show()
                 self.episodeComboBox.show()
 
-    def onEdit(self, query, episode = 0):
-        self.choice.hide()
-        self.episodeComboBox.hide()
-        if not (query.startswith("http") or query.startswith("www")):
-            if not self.isRunning:
-                self.isRunning = False
+    def onEdit(self, query):
+        if query.strip():
+            self.choice.hide()
+            self.episodeComboBox.hide()
+            if not (query.startswith("http") or query.startswith("www")):
                 self.fetcher = Fetcher()
-                self.fetcher.finished.connect(self.f)
                 self.fetcher.finished.connect(self.scrollView.fill)
+                self.fetcher.error.connect(self.scrollView.onError)
                 self.fetcher.run(query, 10)
-            """else:
-                self.fetcher.terminate()
-                self.isRunning = False
-                return self.onEdit(query)"""
+            else:
+                self.fetcher = Fetcher()
+                self.fetcher.error.connect(self.scrollView.onError)
+                self.fetcher.urlParsed.connect(self.handleUrl)
+                self.fetcher.parse_url(query)
         else:
-            self.fetcher = Fetcher()
-            self.fetcher.parse_url(query, self.onEdit)
+            self.scrollView.hide()
+            self.choice.show()
+            self.episodeComboBox.show()
 
+    @pyqtSlot(str, int, str)
+    def handleUrl(self, title, episode, website):
+        self.choice.setCurrentIndex(["animedigitalnetwork.fr", "www.crunchyroll.com", "www.wakanim.tv"].index(website))
+        self.episode = episode
+        self.onEdit(title)
 
-    def f(self, x):
-        self.isRunning = False
 
     def generate_state(self, lFormat, infos):
         episode, ep_nb, saison, s_nb = "", "", "", ""
@@ -187,16 +182,11 @@ class UserInterface(QMainWindow, MainWindow):
         else:
             self.close()
 
-    def get_presence(self, text, Type):
-        if Type == "url":
-            thread = AnimeInfos(text, Type, parent=self)
-            thread.infos.connect(self.update_presence)
-            thread.start()
-        else:
-            website = ["", ["adn_logo", "Anime Digital Network"], ["crunchyroll_logo", "Crunchyroll"], ["wakanim_logo", "Wakanim"], ""][self.choice.currentIndex()]
-            infos = {"ep_nb": str(self.episodeComboBox.counter), "s_nb": "0", "anime_name": self.currentAnime.title, "website": website,
-                     "image": [str(self.currentAnime.id), f"{self.currentAnime.romajiTitle} ({self.currentAnime.seasonYear}), {self.currentAnime.episodes} episodes"]}
-            self.update_presence(infos)
+    def get_presence(self, text):
+        website = ["", ["adn_logo", "Anime Digital Network"], ["crunchyroll_logo", "Crunchyroll"], ["wakanim_logo", "Wakanim"], ""][self.choice.currentIndex()]
+        infos = {"ep_nb": str(self.episodeComboBox.counter), "s_nb": "0", "anime_name": self.currentAnime.title, "website": website,
+                 "image": [str(self.currentAnime.id), f"{self.currentAnime.romajiTitle} ({self.currentAnime.seasonYear}), {self.currentAnime.episodes} episodes"]}
+        self.update_presence(infos)
 
     def update_presence(self, infos):
         params = {"start": time.time(),
@@ -219,7 +209,6 @@ class UserInterface(QMainWindow, MainWindow):
     def closeEvent(self, event):
         self.RPC.close()
         event.accept()
-
 
 app = QApplication(sys.argv)
 win = UserInterface()
