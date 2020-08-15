@@ -26,6 +26,8 @@
     "stop": "Arrêter",
     "error": "ID de l'application invalide",
     "assets": "Ajouter des images 🌐",
+    "warning": "Attention",
+    "id change": "Changer votre ID d'application pendant qu'une présence est active l'arrêtera.\nÊtes-vous sûr de vouloir continuer ?",
 
     "NETWORK_ERROR": "Erreur réseau",
     "PAGE_NOT_FOUND_ERROR": "Page introuvable",
@@ -61,6 +63,8 @@
     "stop": "Stop",
     "assets": "Add assets 🌐",
     "error": "Invalid app ID",
+    "warning": "Warning",
+    "id change": "Changing your app ID while a presence is active will stop it.\nAre you sure you want to continue ?",
 
     "NETWORK_ERROR": "Network error",
     "PAGE_NOT_FOUND_ERROR": "Page not found",
@@ -78,8 +82,8 @@
     "saison": "seizoen",
     "format": "{saison} {s_nb} {episode} {ep_nb}",
 
-    "enter url": "Voer de naam of de url in van de anime die je bekijkt",
-    "select website": "Selecteer de website waarop je een anime bekijkt (optioneel)",
+    "enter url": "Voer de naam of de url in van de anime die u bekijkt",
+    "select website": "Selecteer de website waarop u een anime bekijkt (optioneel)",
     "other": "Andere",
     "confirm": "Bevestig",
     "updated presence": "Aanwezigheid bijgewerkt",
@@ -96,6 +100,14 @@
     "stop": "Stop",
     "previous": "Vroeger",
     "next": "Volgend",
-    "error": "Ongeldig app ID"
+    "error": "Ongeldig app ID",
+    "warning": "Waarschuwing",
+    "id change": "Uw app ID verwisselen als een presence is actief zal het stoppen.\nWeet u zeker dat je door wilt gaan ?",
+
+    "NETWORK_ERROR": "Netwerkprobleem",
+    "PAGE_NOT_FOUND_ERROR": "Pagina niet gevonden",
+    "NO_RESULTS_FOUND_ERROR": "Geen resultaten gevonden",
+    "INVALID_URL_ERROR": "Ongeldige URL",
+    "PARSING_ERROR": "Kan de pagina niet analyseren, voer in plaats de naam van de anime"
   }
 }

@@ -1,9 +1,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from .Widgets import WarningMessage
 
 
 class Ui_SettingsWindow(object):
     def setupUi(self, MainWindow, theme, json):
         self.MainWindow = MainWindow
+        self.warning_message = WarningMessage(json)
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(630, 380)
         MainWindow.setMinimumSize(QtCore.QSize(550, 380))
@@ -56,17 +58,17 @@ class Ui_SettingsWindow(object):
         font.setPointSize(14)
         self.checkBox.setFont(font)
         self.checkBox.setStyleSheet("QCheckBox::indicator{\n"
-                                      "    width: 20px;\n"
-                                      "    height: 20px;\n"
-                                      "}\n"
-                                      "\n"
-                                      "QCheckBox::indicator:unchecked{\n"
-                                      "    image: url(data/ressources/notok.png);\n"
-                                      "}\n"
-                                      "\n"
-                                      "QCheckBox::indicator:checked{\n"
-                                      "    image: url(data/ressources/ok.png);\n"
-                                      "}")
+                                    "    width: 20px;\n"
+                                    "    height: 20px;\n"
+                                    "}\n"
+                                    "\n"
+                                    "QCheckBox::indicator:unchecked{\n"
+                                    "    image: url(data/ressources/notok.png);\n"
+                                    "}\n"
+                                    "\n"
+                                    "QCheckBox::indicator:checked{\n"
+                                    "    image: url(data/ressources/ok.png);\n"
+                                    "}")
         self.checkBox.setChecked(True)
         self.checkBox.setAutoExclusive(True)
         self.checkBox.setObjectName("checkBox")
@@ -157,8 +159,8 @@ class Ui_SettingsWindow(object):
         font.setPointSize(12)
         self.error_label.setFont(font)
         self.error_label.setStyleSheet("QLabel{\n"
-                                        "    color: #bc1a26;\n"
-                                        "}")
+                                       "    color: #bc1a26;\n"
+                                       "}")
         self.error_label.setAlignment(QtCore.Qt.AlignCenter)
         self.error_label.setObjectName("result_label")
         self.verticalLayout.addWidget(self.error_label)
@@ -185,7 +187,7 @@ class Ui_SettingsWindow(object):
     def setTheme(self, theme):
         self.theme = theme
         self.MainWindow.setStyleSheet(f"QMainWindow{{background-color: {self.theme.mainBackgroundColor};\n"
-                                          f"color: {self.theme.fontColor}; {'border-top: 2px solid #F0F0F0' if self.theme.name == 'light' else ''}}}"
+                                      f"color: {self.theme.fontColor}; {'border-top: 2px solid #F0F0F0' if self.theme.name == 'light' else ''}}}"
                                       f"QAbstractItemView {{border: 1px solid {theme.fontColor}; color: {self.theme.fontColor}; background-color: "
                                       f"{self.theme.altBackgroundColor};selection-background-color: #FF0000; outline: 0px;}}"
                                       )
@@ -209,6 +211,6 @@ class Ui_SettingsWindow(object):
         self.groupBox.setStyleSheet(f"color:{self.theme.fontColor};")
         self.groupBox_3.setStyleSheet(f"color:{self.theme.fontColor};")
         self.lineEdit.setStyleSheet("QLineEdit{\n"
-                                                   f"    background: {self.theme.altBackgroundColor};\n"
-                                                   f"    border: 2px solid {self.theme.mainBackgroundColor};\n"
-                                                   "}")
+                                    f"    background: {self.theme.altBackgroundColor};\n"
+                                    f"    border: 2px solid {self.theme.mainBackgroundColor};\n"
+                                    "}")

@@ -1,6 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QScrollArea, QVBoxLayout, QSizePolicy, QComboBox, QMenu, \
-    QAction, QStyle, QApplication, QFileDialog, QGridLayout, QPushButton, QListView
-from .Theme import Theme
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QScrollArea, QSizePolicy, QComboBox, QMenu, \
+    QAction, QStyle, QApplication, QFileDialog, QGridLayout, QPushButton, QListView, QMessageBox
 from PyQt5.QtGui import QPixmap, QPalette, QColor, QMouseEvent, QImage, QPainter, QTransform, QIcon, QFont
 from PyQt5.QtCore import Qt, pyqtSignal, QPoint
 from .Network import Fetcher, Anime
@@ -56,32 +55,32 @@ class AnimeScrollView(QScrollArea):
 
     def setText(self, json):
         self.json = json
-        if self.errorLabel:
+        if self.error:
             self.errorLabel.setText(json.get(self.error.name))
 
     def fill(self, animes):
         for i in reversed(range(self.layout.count())):
-            widgetToRemove = self.layout.itemAt(i).widget()
-            self.layout.removeWidget(widgetToRemove)
-            widgetToRemove.setParent(None)
+            widget_to_remove = self.layout.itemAt(i).widget()
+            self.layout.removeWidget(widget_to_remove)
+            widget_to_remove.setParent(None)
         self.animeLabels.clear()
         for index, anime in enumerate(animes):
-            columnSpan = 1
+            column_span = 1
             if index == len(animes) - 1 and len(animes) % 2 != 0:
-                columnSpan = 2
+                column_span = 2
             self.animeLabels.append(AnimeLabel(anime, self.theme))
             self.animeLabels[-1].labelClicked.connect(self.onClick)
-            self.layout.addWidget(self.animeLabels[-1], index // 2, index % 2, 1, columnSpan)
+            self.layout.addWidget(self.animeLabels[-1], index // 2, index % 2, 1, column_span)
         self.show()
 
     def onError(self, error):
         self.fill(list())
         self.error = error
+        self.errorLabel.setParent(self.widget)
         self.errorLabel.setText(self.json.get(self.error.name, "Unknown error"))
         self.errorLabel.show()
         self.layout.addWidget(self.errorLabel)
         self.show()
-
 
     def onClick(self, anime):
         self.clicked.emit(anime)
@@ -125,8 +124,8 @@ class AnimeLabel(QWidget):
 
     def setTheme(self, theme):
         self.theme = theme
-        color, bgColor = 'black' if self.theme.name == 'light' else 'white', 'white' if self.theme.name == 'light' else 'black'
-        self.setStyleSheet(f"QToolTip{{background-color:{bgColor};color:{color};border: 1px solid {color}}}")
+        color, bg_color = 'black' if self.theme.name == 'light' else 'white', 'white' if self.theme.name == 'light' else 'black'
+        self.setStyleSheet(f"QToolTip{{background-color:{bg_color};color:{color};border: 1px solid {color}}}")
         palette = QPalette()
         palette.setColor(QPalette.Background, QColor(theme.mainBackgroundColor))
         self.setPalette(palette)
@@ -154,19 +153,22 @@ class AnimeLabel(QWidget):
     def dialogSave(self, data):
         if not data:
             data = self.anime.largeImage
-        image = QImage.fromData(data).scaledToHeight(512, Qt.SmoothTransformation)
-        nImage = QImage(512, 512, QImage.Format_ARGB32)
-        margin = (512 - image.width()) / 2
+        image = QImage.fromData(data)
+        if image.height() < 512:
+            image = image.scaledToHeight(512, Qt.SmoothTransformation)
+        size = image.height()
+
+        new_image = QImage(size, size, QImage.Format_ARGB32)
+        margin = (size - image.width()) / 2
         start = QPoint(margin, 0)
-        painter = QPainter(nImage)
+        painter = QPainter(new_image)
         painter.setRenderHints(QPainter.HighQualityAntialiasing | QPainter.SmoothPixmapTransform, True)
         painter.drawImage(start, image)
         painter.end()
         filename = QFileDialog.getSaveFileName(self, "Save the image",
                                                os.path.join(os.getcwd(), f"{self.anime.id}.png"))
         if filename:
-            nImage.save(filename[0])
-
+            new_image.save(filename[0])
 
     def leaveEvent(self, event):
         palette = QPalette()
@@ -221,6 +223,7 @@ class WebsiteComboBox(QComboBox):
         self.json = json
         self.lineEdit().setPlaceholderText(json["select website"])
 
+
 class EpisodeComboBox(QWidget):
     def __init__(self, translate, theme):
         super(EpisodeComboBox, self).__init__()
@@ -248,7 +251,7 @@ class EpisodeComboBox(QWidget):
 
     def setText(self, translate):
         self.translate = translate
-        for i in range(self.max):
+        for i in range(1, self.max+1):
             self.combo.setItemText(i, f"{self.translate['episode'].capitalize()} {i}")
 
     def setTheme(self, theme):
@@ -300,20 +303,28 @@ class EpisodeComboBox(QWidget):
     def onSelect(self, index):
         self.counter = index + 1
 
-    def init(self, max):
+    def init(self, maximum):
         self.counter = 1
-        if max > self.max:
-            for i in range(self.max + 1, max + 1):
+        if maximum > self.max:
+            for i in range(self.max + 1, maximum + 1):
                 self.combo.addItem(f"{self.translate['episode'].capitalize()} {i}")
-        elif max < self.max:
-            for i in range(self.max - 1, max - 1, -1):
+        elif maximum < self.max:
+            for i in range(self.max - 1, maximum - 1, -1):
                 self.combo.removeItem(i)
-        self.max = max
+        self.max = maximum
 
-if __name__ == "__main__":
-    application = QApplication([])
-    widget = EpisodeComboBox({"episode":"Episode"}, Theme.get_theme("dark"))
-    widget.init(10)
-    widget.show()
-    application.exec_()
 
+class WarningMessage(QMessageBox):
+
+    def __init__(self, data):
+        super(WarningMessage, self).__init__()
+        self.setIcon(QMessageBox.Warning)
+        self.setWindowTitle(data["warning"])
+        self.setText(data["id change"])
+        self.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        icon = QIcon(QPixmap("data/ressources/letters.png"))
+        self.setWindowIcon(icon)
+
+    def changeText(self, lang):
+        self.setWindowTitle(lang["warning"])
+        self.setText(lang["id change"])

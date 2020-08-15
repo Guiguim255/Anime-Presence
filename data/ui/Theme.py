@@ -8,7 +8,6 @@ BLACK = "#000000"
 
 
 class Theme:
-    
     def __init__(self, fontColor, mainBackgroundColor, altBackgroundColor, name):
         self.fontColor = fontColor
         self.mainBackgroundColor = mainBackgroundColor

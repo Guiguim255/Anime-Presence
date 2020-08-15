@@ -42,6 +42,7 @@ variables = {
 }
 URL = "https://graphql.anilist.co"
 
+
 class Anime:
 
     def __init__(self, id, title, coverImage, episodes, seasonYear, description, format, duration):
@@ -59,6 +60,7 @@ class Anime:
         self.description = description
         self.format = format
         self.duration = duration
+
 
 class ErrorCodes(Enum):
     NO_RESULTS_FOUND_ERROR = 0
@@ -80,7 +82,7 @@ class Fetcher(QObject):
         self.manager = QNetworkAccessManager()
         self.count, self.length = 0, 0
 
-    def run(self, query, per_page = 10):
+    def run(self, query, per_page=10):
         variables["search"], variables["perPage"] = query, per_page
         request = QNetworkRequest(QUrl(URL))
         request.setHeader(QNetworkRequest.ContentTypeHeader,
@@ -90,7 +92,7 @@ class Fetcher(QObject):
         self.manager.finished.connect(self.getImages)
         self.manager.post(request, array)
 
-    def getImages(self, reply:QNetworkReply):
+    def getImages(self, reply: QNetworkReply):
         if reply.error() == QNetworkReply.NoError:
             self.manager.finished.disconnect(self.getImages)
             self.manager.finished.connect(self.handleData)
@@ -123,7 +125,7 @@ class Fetcher(QObject):
             self.error.emit(ErrorCodes.NETWORK_ERROR)
             self.terminate()
 
-    def handleData(self, reply:QNetworkReply):
+    def handleData(self, reply: QNetworkReply):
         if reply.error() == QNetworkReply.NoError:
             data = reply.readAll()
             self.animes[reply.url().url()].largeDataImage = data
@@ -139,7 +141,7 @@ class Fetcher(QObject):
         self.terminated = True
         self.manager.deleteLater()
 
-    def parse_url(self, arg:QNetworkReply, step = 1):
+    def parse_url(self, arg: QNetworkReply, step=1):
         title, episode = "", 0
         if step == 1:
             parsed = urlparse(arg)
@@ -151,7 +153,7 @@ class Fetcher(QObject):
                     if match:
                         episode = int(match.group(1))
                     self.urlParsed.emit(title, episode, parsed.netloc)
-                except (IndexError):
+                except IndexError:
                     self.error.emit(ErrorCodes.PARSING_ERROR)
             elif parsed.netloc in ("animedigitalnetwork.fr", "www.wakanim.tv"):
                 self.url = arg
@@ -161,7 +163,7 @@ class Fetcher(QObject):
                 self.manager.finished.connect(lambda reply: self.parse_url(reply, 2))
                 self.manager.get(request)
             else:
-                self.error.emit(ErrorCodes.INVALID_URL)
+                self.error.emit(ErrorCodes.INVALID_URL_ERROR)
         elif step == 2:
             if arg.error() == QNetworkReply.NoError:
                 if arg.url().url() == "https://www.wakanim.tv/fr/v2/catalogue" and arg.url().url() != self.url:
@@ -183,7 +185,7 @@ class Fetcher(QObject):
                     elif parsed.netloc == "www.wakanim.tv":
                         title = soup.find("span", {"class": "episode_title"}).text
                         span = soup.find("span", {"class": "episode_subtitle"}).text
-                        match = re.match(r".*ÉPISODE ([0-9]*)", span, flags = re.DOTALL)
+                        match = re.match(r".*ÉPISODE ([0-9]*)", span, flags=re.DOTALL)
                         if match:
                             episode = int(match.group(1))
                         self.urlParsed.emit(title, episode, parsed.netloc)

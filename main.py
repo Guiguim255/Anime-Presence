@@ -20,7 +20,7 @@ class UserInterface(QMainWindow, MainWindow):
         super(UserInterface, self).__init__()
 
         print("Loading languages...")
-        with open("data/translation.json", "r", encoding = "UTF-8") as json_file:
+        with open("data/translation.json", "r", encoding="UTF-8") as json_file:
             self.translation = json.load(json_file)
 
         print("Loading configuration...")
@@ -42,18 +42,20 @@ class UserInterface(QMainWindow, MainWindow):
         print("Setting up the window and loading configuration...")
         self.setupUi(self, self.theme, self.translation[self.language])
 
-        print("Loading settings window...")
-        self.settingsWindow = Settings_UserInterface(self.theme, self.translation[self.language])
-        self.settings_button.clicked.connect(self.openSettings)
-        self.settingsWindow.onClose.connect(self.onSettingsClosed)
-        self.settingsWindow.themeChanged.connect(self.setAllThemes)
-        self.settingsWindow.languageChanged.connect(self.setAllTexts)
-
         print("Initializing the presence...")
         client_id = self.config_json["App_ID"]
         self.RPC = Presence(client_id)
         print("Connecting...")
         self.RPC.connect()
+
+        print("Loading settings window...")
+        self.settingsWindow = Settings_UserInterface(self.theme, self.translation[self.language], self.RPC)
+        self.settings_button.clicked.connect(self.openSettings)
+        self.settingsWindow.onClose.connect(self.onSettingsClosed)
+        self.settingsWindow.theme_changed.connect(self.setAllThemes)
+        self.settingsWindow.language_changed.connect(self.setAllTexts)
+        self.settingsWindow.presence_change.connect(self.set_id)
+
         print("Ready")
 
         self.episode = 0
@@ -74,31 +76,46 @@ class UserInterface(QMainWindow, MainWindow):
     @pyqtSlot(str)
     def setAllTexts(self, language):
         lang = ""
-        for l in self.translation:
-            if self.translation[l]["name"] == language:
-                lang = l
+        for i in self.translation:
+            if self.translation[i]["name"] == language:
+                lang = i
+                break
         if lang != self.language:
             self.language = lang
             self.setText(self.translation[self.language])
             self.settingsWindow.setText(self.translation[self.language])
+            self.settingsWindow.warning_message.changeText(self.translation[self.language])
             self.choice.setText(self.translation[self.language])
+            self.scrollView.setText(self.translation[self.language])
 
     @pyqtSlot(str)
-    def setAllThemes(self, themeName):
-        if themeName != self.theme.name:
-            self.theme = Theme.get_theme(themeName)
+    def setAllThemes(self, theme_name):
+        if theme_name != self.theme.name:
+            self.theme = Theme.get_theme(theme_name)
             self.setTheme(self.theme)
             self.settingsWindow.setTheme(self.theme)
             self.scrollView.setTheme(self.theme)
             self.choice.setTheme(self.theme)
 
+    def set_id(self, presence):
+        self.RPC = presence
+        self.RPC.connect()
+        self.result_label.clear()
+        self.confirm_button.setText(self.translation[self.language]["start"])
+        if self.RPC.client_id == ORIGINAL_APP_ID:
+            self.web_button.hide()
+        else:
+            self.web_button.clicked.disconnect()
+            self.web_button.clicked.connect(lambda event: webbrowser.open(
+                f"https://discord.com/developers/applications/{self.RPC.client_id}/rich-presence/assets"))
+            self.web_button.show()
+
     def on_confirm_button_clicked(self):
-        text = self.url_entry.text()
-        buttonText = self.confirm_button.text()
-        if buttonText == self.translation[self.language]["start"]:
-            if text:
+        button_text = self.confirm_button.text()
+        if button_text == self.translation[self.language]["start"]:
+            if self.currentAnime:
                 self.confirm_button.setText(self.translation[self.language]["stop"])
-                self.get_presence(text)
+                self.get_presence()
                 self.result_label.setText(self.translation[self.language]["updated presence"])
         else:
             self.result_label.clear()
@@ -160,8 +177,7 @@ class UserInterface(QMainWindow, MainWindow):
         self.episode = episode
         self.onEdit(title)
 
-
-    def generate_state(self, lFormat, infos):
+    def generate_state(self, lang_format, infos):
         episode, ep_nb, saison, s_nb = "", "", "", ""
         if infos.get("s_nb", "0") not in ("0", "1"):
             saison = self.translation[self.language]['saison'].capitalize()
@@ -169,7 +185,7 @@ class UserInterface(QMainWindow, MainWindow):
         if infos.get("ep_nb", "0") != "0":
             episode = self.translation[self.language]['episode'].capitalize()
             ep_nb = infos['ep_nb']
-        return lFormat.format(saison=saison, s_nb=s_nb, episode=episode, ep_nb=ep_nb)
+        return lang_format.format(saison=saison, s_nb=s_nb, episode=episode, ep_nb=ep_nb)
 
     def openSettings(self):
         self.hide()
@@ -182,14 +198,14 @@ class UserInterface(QMainWindow, MainWindow):
         else:
             self.close()
 
-    def get_presence(self, text):
-        website = ["", ["adn_logo", "Anime Digital Network"], ["crunchyroll_logo", "Crunchyroll"], ["wakanim_logo", "Wakanim"], ""][self.choice.currentIndex()]
+    def get_presence(self):
+        website = [["adn_logo", "Anime Digital Network"], ["crunchyroll_logo", "Crunchyroll"], ["wakanim_logo", "Wakanim"], ""][self.choice.currentIndex()]
         infos = {"ep_nb": str(self.episodeComboBox.counter), "s_nb": "0", "anime_name": self.currentAnime.title, "website": website,
                  "image": [str(self.currentAnime.id), f"{self.currentAnime.romajiTitle} ({self.currentAnime.seasonYear}), {self.currentAnime.episodes} episodes"]}
         self.update_presence(infos)
 
     def update_presence(self, infos):
-        params = {"start": time.time(),
+        params = {"start": int(time.time()),
                   "details": f"{self.translation[self.language]['watching']} {infos['anime_name']}",
                   "state": self.generate_state(self.l_format, infos)}
 
@@ -209,6 +225,7 @@ class UserInterface(QMainWindow, MainWindow):
     def closeEvent(self, event):
         self.RPC.close()
         event.accept()
+
 
 app = QApplication(sys.argv)
 win = UserInterface()
