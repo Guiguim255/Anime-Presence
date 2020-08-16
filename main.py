@@ -49,7 +49,7 @@ class UserInterface(QMainWindow, MainWindow):
         self.RPC.connect()
 
         print("Loading settings window...")
-        self.settingsWindow = Settings_UserInterface(self.theme, self.translation[self.language], self.RPC)
+        self.settingsWindow = Settings_UserInterface(self.theme, self.translation, self.RPC, self.config_json)
         self.settings_button.clicked.connect(self.openSettings)
         self.settingsWindow.onClose.connect(self.onSettingsClosed)
         self.settingsWindow.theme_changed.connect(self.setAllThemes)
